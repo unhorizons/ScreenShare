@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion du Live - SCREEN SHARE</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Gestion du Live</h1>
+
+        <div id="qrcode"></div>
+        <div id="link"></div>
+
+        
+        <div class="live-controls">
+            <button id="start-btn" class="live-btn">🟢 LIVE</button>
+            <!-- <button class="pause-btn">🟡 PAUSE</button> -->
+            <button id="end-btn" class="end-btn">🔴 ARRÊTER</button>
+        </div>
+
+        <div class="participants">
+            <h3>Participants</h3>
+            <p class="users-list">franck | franck | franck | franck</p>
+        </div>
+
+        <div class="messages">
+            <h3>Messages</h3>
+            <textarea placeholder="Écrire un message..."></textarea>
+        </div>
+    </div>
+
+    <script src="/static/axios.min.js"></script>
+    <script src="/static/qrcode.js"></script>
+    <script>
+        const token = localStorage.getItem('jwt');
+        if(token){
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+        }
+        else{
+            alert("You need to log in first!");
+        }
+        
+        const params = new URLSearchParams(window.location.search)
+        const session_id = params.get('session_id')
+
+        
+        console.log(session_id)
+        
+        function display_users(users){
+            users_list = document.querySelector('.users-list')
+            users_list.innerHTML = ''
+            
+            for(user of users){
+                users_list.innerHTML +=  `| ${user.username}`
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            
+            const { data } = await axios.get(`/sessions/${session_id}`)
+            display_users(data.users)
+
+            new QRCode(document.getElementById("qrcode"), `${window.location.origin}/${data.slug}`);
+
+            document.getElementById("start-btn").addEventListener('click', async () => {
+                session_controls(play=true)
+            })
+            document.getElementById("end-btn").addEventListener('click', async () => {
+                session_controls(play=false)
+            })
+            
+        })
+    
+        async function session_controls(play){
+            if(play === true){
+
+                const stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always" } })
+                const peer = createPeer(play)
+    
+                stream.getTracks().forEach(track => peer.addTrack(track, stream))
+            }else{
+                const {data} = await axios.post(`/sessions/${session_id}`, {play: false})
+                console.log(data)
+            }
+        }
+
+        function createPeer(){
+            const peer = new RTCPeerConnection({
+                iceServers : [
+                    {
+                        urls: "stun:stun.stunprotocol.org"
+                    }
+                ]
+            })
+            peer.onnegotiationneeded = () => handleNegotiationNeededEvent(peer)
+
+            return peer
+        }
+
+        async function handleNegotiationNeededEvent(peer) {
+            const offer = await peer.createOffer()
+            await peer.setLocalDescription(offer)
+            const payload = {
+                active : true,
+                sdp: peer.localDescription
+            }
+
+            const { data } = await axios.patch(`/sessions/${session_id}`, payload)
+            const desc = new RTCSessionDescription(data.sdp)
+            peer.setRemoteDescription(desc).catch(e => console.log(e))
+        }
+
+    </script>
+</body>
+</html>

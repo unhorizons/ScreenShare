@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter un Atelier</title>
+    <link rel="stylesheet" href="/ui/host/style.css">
+    <link rel="stylesheet" href="/static/toast.css">
+    <style>
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SCREEN SHARE</h1>
+        <p>Connexion de l'instructeur</p>
+        
+        <!-- Formulaire pour ajouter un atelier -->
+        <form id="host-form">
+            <input type="text" name="username" id="username" placeholder="Nom de l'instructeur" required>
+            <input type="text" name="code" id="code" placeholder="Code d'access" required>
+            <button type="submit">Se connecter</button>
+        </form>
+        
+    </div>
+
+    <script src="/static/toast.js"></script>
+    <script src="/static/axios.min.js"></script>
+
+    <script>
+
+        const form = document.getElementById('host-form')
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault()
+            const formdata = new FormData(form);
+            const formobject = {};
+
+            // Convert FormData to a plain JavaScript object
+            formdata.forEach((value, key) => {
+                formobject[key] = value;
+            });
+
+            try{
+                const { data } = await axios.post('/host-login', formobject)
+                if (data.token) {
+                    localStorage.setItem('jwt', data.token);
+                    window.location.href = `/ui/host/ajout.html`;
+                } else {
+                    new Toast({msg : 'Login failed : no token received', type : 'error'})
+                }
+            }catch (err){
+                new Toast({msg : err.response.data.detail, type : 'error'})
+            }
+
+
+        });
+    </script>
+</body>
+</html>

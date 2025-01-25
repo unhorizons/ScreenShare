@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choisir un Pseudo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Choisissez votre Pseudo</h1>
+        <form id="login-form">
+
+            <input type="text" id="username" name="username" placeholder="Entrez votre pseudo...">
+            <button type="submit" id="join-btn">Rejoinde la session</button>
+            
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('login-form')
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault()
+            const formdata = new FormData(form);
+            const formobject = {};
+
+            // Convert FormData to a plain JavaScript object
+            formdata.forEach((value, key) => {
+                formobject[key] = value;
+            });
+            const jsondata = JSON.stringify(formobject); 
+
+            session_id = 1 // Change this to get an actual session id
+            try {
+                const response = await fetch(`/join_session/${session_id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: jsondata,
+                })
+
+                if (response.ok) {
+                    const responsedata = await response.json();
+                    console.log(responsedata)
+                } else {
+                    console.error('Error:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error sending data:', error);
+            }
+        } )
+    </script>
+</body>
+</html>

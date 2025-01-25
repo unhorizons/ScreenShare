@@ -1,0 +1,117 @@
+
+require('dotenv').config();
+const express = require('express')
+const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser')
+
+const { exec } = require('child_process');
+
+
+const { User } = require('./src/database.js')
+const { createPeer, broadcaster } = require('./src/webrtc.js')
+const { authenticateToken, generateToken, generateHostAccessCode } = require('./src/authentication.js');
+const { session_router } = require('./src/session_router.js');
+const { user_router } = require('./src/user_router.js');
+
+const app = express()
+
+const PORT = 5000 
+let access_code
+let access_code_renewer
+let host_logged_in = false
+let HOST_ACCESS_PATH = '/host-login'
+
+
+app.use(express.static('public'))
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({extended : true}))
+
+// Prevents all access before the host has logged in
+app.use((req, res, next) => {
+    if(!host_logged_in && req.path != HOST_ACCESS_PATH){
+        res.status(403)
+        msg = "Server locked down until the host login"
+        console.log(msg)
+        return res.json({
+            detail : msg
+        })
+    }
+    next()
+})
+
+app.use('/sessions', session_router)
+app.use('/users', user_router)
+
+
+
+app.post('/consumer', async ({body}, res) => {
+    const peer = await createPeer('viewer', body.sdp)
+    const payload = {
+        sdp: peer.localDescription
+    }
+
+    res.json(payload)
+})
+
+
+app.post('/broadcast', async ({body}, res) => {
+    const peer = await createPeer('broadcaster', body.sdp)
+    const payload = {
+        sdp: peer.localDescription
+    }
+
+    res.json(payload)
+})
+
+app.post('/host-login', ({body : {username, code}}, res) => {
+    if(code === access_code){
+
+        const user = new User({username, role : 'host'})
+        const token = generateToken(user);
+
+        host_logged_in = true
+        clearInterval(access_code_renewer)
+        return res.json({
+            token : token,
+            detail : "Host logged in, the server has been unlocked"
+        })
+    }
+    res.status(400)
+    return res.json({
+        detail : "Invalid access code"
+    })
+})
+
+
+app.get('/:session_slug', ({params : {session_slug}}, res) => {
+    res.redirect(301, `/ui/client/pseudo.html?session_id=${session_slug}`)
+})
+
+
+app.listen(PORT, '0.0.0.0', () => {
+    
+    console.log('Server started')
+
+    access_code = generateHostAccessCode()
+    // clipboardy.writeSync(access_code); // Copy the code to the clipboard
+    console.log(`Your access code is : "${access_code}"` )
+    
+    access_code_renewer = setInterval(() => {
+        access_code = generateHostAccessCode()
+        // clipboardy.writeSync(access_code); // Copy the code to the clipboard
+
+        console.log(`Renewed access code : "${access_code}"` )
+
+    }, 30000)
+
+    const url = `http://localhost:${PORT}${HOST_ACCESS_PATH}.html`;
+    if (process.platform === 'win32') {
+        exec(`start ${url}`); // Windows
+    } else if (process.platform === 'darwin') {
+        exec(`open ${url}`); // macOS
+    } else {
+        exec(`xdg-open ${url}`); // Linux
+    }
+
+    
+})

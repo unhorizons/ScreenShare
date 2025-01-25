@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Affichage du Live</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Live en cours...</h1>
+        <video id="screenShare" autoplay></video>
+    </div>
+
+    <script>
+        async function startScreenShare() {
+            try {
+                const stream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { cursor: "always" },
+                    audio: true
+                });
+                document.getElementById('screenShare').srcObject = stream;
+            } catch (error) {
+                console.error('Erreur de partage d\'écran : ', error);
+            }
+        }
+
+        startScreenShare();
+    </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter un Atelier</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/static/toast.css">
+</head>
+<body>
+    <div class="container">
+        <h1>SCREEN SHARE</h1>
+        <p>Ajouter une nouvelle session</p>
+        
+        <!-- Formulaire pour ajouter un atelier -->
+        <form id="session-form">
+            <input type="text" name="workshop" id="workshop" placeholder="Nom de l'atelier" required>
+            <!-- <input type="text" name="lead" id="lead" placeholder="Nom de l'instructeur" required> -->
+            <button type="submit">Enregistrer</button>
+        </form>
+        
+    </div>
+
+    <script src="/static/toast.js"></script>
+    <script src="/static/axios.min.js"></script>
+
+    <script>
+
+        const token = localStorage.getItem('jwt');
+
+        if(token){
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+        }
+        else{
+            alert("You need to log in first!");
+        }
+
+
+        const form = document.getElementById('session-form')
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault()
+            const formdata = new FormData(form);
+            const formobject = {};
+
+            // Convert FormData to a plain JavaScript object
+            formdata.forEach((value, key) => {
+                formobject[key] = value;
+            });
+
+            try{
+                const { data } = await axios.post('/sessions', formobject)
+                if(data.session_id != undefined)
+                    window.location.href = `/ui/host/partage.html?session_id=${data.session_id}`;
+                else
+                    new Toast({msg : 'No session id received', type : 'error'})
+            }
+            catch (err){
+                new Toast({msg: `Unable to create a session : ${err.response.data.detail}`, type : 'error'})
+            }
+        });
+    </script>
+</body>
+</html>

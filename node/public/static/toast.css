@@ -1,0 +1,105 @@
+body{
+    position: relative;
+}
+/* This should be moved to the global CSS file and better styling*/
+.toast{
+    display: flex;
+    /* display: none; */
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    position: fixed;
+
+    left: 50%;
+    transform: translateX(-50%);
+    top: 100px;
+
+    text-align: center;
+
+    padding: 5px 15px;
+
+    border-radius: 20px;
+    z-index: 9999;
+
+}
+.toast.show{
+    animation-duration: 3s;
+    animation-name: toast;
+}
+.toast.msg{
+}
+.toast.waiting{
+    animation-duration: 1s;
+    animation-name: waiting;
+    animation-fill-mode: forwards;
+}
+.toast.closing{
+    animation-duration: 1;
+    animation-name: closing;
+    animation-fill-mode: forwards;
+}
+.toast.warning{
+    background-color: yellow;
+}
+.toast.error{
+    background-color: red;
+    color: white;
+}
+.toast.success{
+    background-color: green;
+    color: white;
+}
+@keyframes toast {
+    0%{
+        opacity: 0;
+        transform: translateX(-50%) scale(0);
+    }
+    10%{
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+    }
+
+    90%{
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+    }
+    100%{
+        opacity: 0;
+        transform: translateX(-50%) scale(0);
+    }
+}
+@keyframes waiting {
+    0%{
+        opacity: 0;
+        transform: translateX(-50%) scale(0);
+    }
+    50%{
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+    }100%{
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+    }
+}
+@keyframes closing {
+    0%{
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+    }
+    50%{
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+    }100%{
+        opacity: 0;
+        transform: translateX(-50%) scale(0);
+    }
+}
+
+.spinner {
+    border: 5px solid #f3f3f3; /* Light grey */
+    border-top: 5px solid #025551;
+    border-radius: 50%;
+    width: 15px;
+    height: 15px;
+    animation: spin 1s linear infinite;
+}

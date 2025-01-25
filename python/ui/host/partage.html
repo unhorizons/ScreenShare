@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion du Live - SCREEN SHARE</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Gestion du Live</h1>
+        
+        <div class="live-controls">
+            <button id="start-btn" class="live-btn">🟢 LIVE</button>
+            <button class="pause-btn">🟡 PAUSE</button>
+            <button id="end-btn" class="end-btn">🔴 ARRÊTER</button>
+        </div>
+
+        <div class="participants">
+            <h3>Participants</h3>
+            <p class="users-list">franck | franck | franck | franck</p>
+        </div>
+
+        <div class="messages">
+            <h3>Messages</h3>
+            <textarea placeholder="Écrire un message..."></textarea>
+        </div>
+    </div>
+
+    <script>
+        async function session_controls(play, session_id){
+            const jsondata = {
+                active : play
+            }
+            try {
+                const response = await fetch(`/sessions/${session_id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(jsondata),
+                });
+
+                if (response.ok) {
+                    const responsedata = await response.json();
+                    console.log(responsedata)
+                } else {
+                    console.error('Error:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error sending data:', error);
+            }
+        }
+
+        function display_users(users){
+            users_list = document.querySelector('.users-list')
+            users_list.innerHTML = ''
+
+            for(user of users){
+                users_list.innerHTML +=  ` | ${user.username}`
+            }
+        }
+    </script>
+
+    <script>
+        const params = new URLSearchParams(window.location.search)
+        const session_id = params.get('session_id')
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            
+            try {
+                const response = await fetch(`/sessions/${session_id}`, {
+                    method: 'GET',
+                });
+
+                if (response.ok) {
+                    const responsedata = await response.json();
+                    display_users(responsedata.users)
+                    console.log(responsedata)
+                } else {
+                    console.error('Error:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error sending data:', error);
+            }
+        })
+    
+
+        document.getElementById("start-btn").addEventListener('click', async () => {
+            session_controls(play=true, session_id)
+        })
+        document.getElementById("end-btn").addEventListener('click', async () => {
+            session_controls(play=false, session_id)
+        })
+    </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner le QR Code</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Scanner le QR Code</h1>
+        
+        <!-- Zone de Scan QR -->
+        <div class="qr-scanner">
+            <video id="videoElement"></video>
+        </div>
+        
+        <!-- Champ pour coller un lien -->
+        <input type="text" id="manualLink" placeholder="Ou collez un lien ici...">
+        <button onclick="submitLink()">Valider</button>
+
+        <a href="pseudo.html">Suivant ➡️</a>
+    </div>
+
+    <script>
+        // Simulation du scanner de QR code
+        const video = document.getElementById("videoElement");
+        if (navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function (stream) {
+                    video.srcObject = stream;
+                })
+                .catch(function (error) {
+                    console.log("Erreur d'accès à la caméra : ", error);
+                });
+        }
+
+        function submitLink() {
+            const link = document.getElementById('manualLink').value.trim();
+            if (link) {
+                alert('Lien validé : ' + link);
+            } else {
+                alert('Veuillez scanner ou coller un lien valide.');
+            }
+        }
+    </script>
+</body>
+</html>

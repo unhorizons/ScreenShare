@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Affichage du Live</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Live en cours...</h1>
+        <video id="video" autoplay></video>
+    </div>
+
+    <script src="/static/axios.min.js"></script>
+    <script>
+        const token = localStorage.getItem('jwt');
+
+        if(token){
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+        }
+        else{
+            alert("You need to log in first!");
+        }
+
+        const params = new URLSearchParams(window.location.search)
+        const session_id = params.get('session_id')  
+        
+
+        window.onload = () => {
+            init()
+        }
+
+        async function init() {
+            const peer = createPeer()
+            peer.addTransceiver('video', { direction: "recvonly"})
+        }
+
+        function createPeer() {
+            const peer = new RTCPeerConnection({
+                iceServers : [
+                    {
+                        urls: "stun:stun.stunprotocol.org"
+                    }
+                ]
+            })
+            peer.ontrack = handleTrackEvent
+            peer.onnegotiationneeded = () => handleNegotiationNeededEvent(peer)
+
+            return peer
+        }
+
+        async function handleNegotiationNeededEvent(peer) {
+            const offer = await peer.createOffer()
+            await peer.setLocalDescription(offer)
+            const payload = {
+                sdp: peer.localDescription
+            }
+
+            const { data } = await axios.post(`/sessions/${session_id}`, payload)
+            const desc = new RTCSessionDescription(data.sdp)
+            peer.setRemoteDescription(desc).catch(e => console.log(e))
+        }
+
+        function handleTrackEvent(e){
+            document.getElementById('video').srcObject = e.streams[0]
+        }
+
+    </script>
+</body>
+</html>
