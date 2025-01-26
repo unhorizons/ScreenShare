@@ -2,7 +2,7 @@
 const express = require('express')
 
 const { User, Session } = require('./database.js')
-const { createPeer, broadcaster } = require('./webrtc.js')
+const { createPeer } = require('./webrtc.js')
 const { authenticateToken, authenticateHost} = require('./authentication.js')
 const { raise404 } = require('./utils.js')
 
@@ -72,28 +72,45 @@ session_router.post('/', authenticateToken, authenticateHost, async ({user, body
 // Start or end a session
 session_router.patch('/:session', parseSession, authenticateToken, authenticateHost, async({body : {active, sdp}, session}, res) => {
 
+    console.log("Hi, this is session control")
     if(active === session.active){
+        console.log("Looks like there is nothing to do")
         res.json({
             detail : "No change made to the session"
         })
         return
     }
     if(active === true){
-
-        const peer = await createPeer('broadcaster', sdp)
+        console.log("Let's start a session")
+        
+        const peer = await createPeer({
+            type : 'broadcaster', 
+            sdp : sdp, 
+            session : session
+        })
     
         session.active = true
         res.json({
             detail : "Session started successfully",
             sdp: peer.localDescription
         })
-
         return
     }
     if(active === false){
+        console.log("Let's close a session")
         session.active = false
 
-        broadcaster.close()
+        console.log(session.broadcaster)
+        console.log(session.broadcast)
+
+        session.broadcaster.getSenders().forEach(sender => session.broadcaster.removeTrack(sender));
+        session.broadcaster.getTransceivers().forEach(transceiver => transceiver.stop());
+        session.broadcaster.close();
+        session.broadcaster = null;
+
+        session.end_time = new Date()
+
+        console.log(session.broadcaster)
 
         res.json({
             detail : "Session ended successfully"
@@ -107,7 +124,11 @@ session_router.post('/:session', parseSession, authenticateToken, async ({user, 
     user.session = session
 
     if(session.active === true){
-        const peer = await createPeer('viewer', sdp)
+        const peer = await createPeer({
+            type : 'viewer', 
+            sdp : sdp,
+            session : session
+        })
         const payload = {
             sdp: peer.localDescription,
             detail: "Session joined successfully"

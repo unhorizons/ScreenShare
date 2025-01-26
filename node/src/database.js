@@ -24,6 +24,8 @@ class Session extends BaseModel{
     end_time
     active
     slug
+    broadcaster
+    broadcast
 
     constructor({workshop, lead}){
         super()
@@ -43,6 +45,8 @@ class Session extends BaseModel{
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')
 
+        this.broadcast = null
+        this.broadcaster = null
         this.lead = lead
         this.active = false
         this.start_time = new Date(Date.now())

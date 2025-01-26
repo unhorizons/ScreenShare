@@ -3,6 +3,8 @@ require('dotenv').config();
 const express = require('express')
 const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser')
+const fs = require('fs')
+const https = require('https')
 
 const { exec } = require('child_process');
 
@@ -22,9 +24,19 @@ let host_logged_in = false
 let HOST_ACCESS_PATH = '/host-login'
 
 
+// Log all incoming requests
+app.use((req, res, next) => {
+
+    console.log(`[${new Date().toLocaleString()}] [${req.method}] : ${req.path}`)
+
+    next()
+})
+
 app.use(express.static('public'))
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended : true}))
+
+
 
 // Prevents all access before the host has logged in
 app.use((req, res, next) => {
@@ -88,8 +100,12 @@ app.get('/:session_slug', ({params : {session_slug}}, res) => {
 })
 
 
-app.listen(PORT, '0.0.0.0', () => {
-    
+const options = {
+    key : fs.readFileSync("key.pem"),
+    cert : fs.readFileSync("cert.pem")
+}
+
+https.createServer(options, app).listen(443, () => {
     console.log('Server started')
 
     access_code = generateHostAccessCode()
@@ -104,7 +120,7 @@ app.listen(PORT, '0.0.0.0', () => {
 
     }, 30000)
 
-    const url = `http://localhost:${PORT}${HOST_ACCESS_PATH}.html`;
+    const url = `https://localhost:${443}${HOST_ACCESS_PATH}.html`;
     if (process.platform === 'win32') {
         exec(`start ${url}`); // Windows
     } else if (process.platform === 'darwin') {
@@ -113,5 +129,32 @@ app.listen(PORT, '0.0.0.0', () => {
         exec(`xdg-open ${url}`); // Linux
     }
 
-    
 })
+
+// app.listen(PORT, '0.0.0.0', () => {
+    
+//     console.log('Server started')
+
+//     access_code = generateHostAccessCode()
+//     // clipboardy.writeSync(access_code); // Copy the code to the clipboard
+//     console.log(`Your access code is : "${access_code}"` )
+    
+//     access_code_renewer = setInterval(() => {
+//         access_code = generateHostAccessCode()
+//         // clipboardy.writeSync(access_code); // Copy the code to the clipboard
+
+//         console.log(`Renewed access code : "${access_code}"` )
+
+//     }, 30000)
+
+//     const url = `http://localhost:${PORT}${HOST_ACCESS_PATH}.html`;
+//     if (process.platform === 'win32') {
+//         exec(`start ${url}`); // Windows
+//     } else if (process.platform === 'darwin') {
+//         exec(`open ${url}`); // macOS
+//     } else {
+//         exec(`xdg-open ${url}`); // Linux
+//     }
+
+    
+// })

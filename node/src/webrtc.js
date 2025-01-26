@@ -1,10 +1,7 @@
 const webrtc = require('wrtc')
 
-let broadcast
-let broadcaster
 
-
-async function createPeer(type, sdp){
+async function createPeer({type, sdp, session}){
     const peer = new webrtc.RTCPeerConnection({
         iceServers: [
             {
@@ -13,10 +10,11 @@ async function createPeer(type, sdp){
         ]
     })
 
+    session.broadcaster = peer
+    
     if (type === 'broadcaster'){
         peer.ontrack = (e, peer) => {
-            broadcast = e.streams[0]
-            broadcaster = peer
+            session.broadcast = e.streams[0]
         }
     }
     
@@ -24,7 +22,7 @@ async function createPeer(type, sdp){
     await peer.setRemoteDescription(desc)
 
     if (type === 'viewer'){
-        broadcast.getTracks().forEach(track => peer.addTrack(track, broadcast))
+        session.broadcast.getTracks().forEach(track => peer.addTrack(track, session.broadcast))
     }
 
     const answer = await peer.createAnswer()
@@ -36,5 +34,5 @@ async function createPeer(type, sdp){
 
 
 module.exports = {
-    broadcaster, createPeer
+    createPeer
 }

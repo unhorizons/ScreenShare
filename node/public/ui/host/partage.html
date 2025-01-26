@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion du Live - SCREEN SHARE</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/static/toast.css">
 </head>
 <body>
     <div class="container">
@@ -31,6 +32,7 @@
         </div>
     </div>
 
+    <script src="/static/toast.js"></script>
     <script src="/static/axios.min.js"></script>
     <script src="/static/qrcode.js"></script>
     <script>
@@ -45,8 +47,7 @@
         const params = new URLSearchParams(window.location.search)
         const session_id = params.get('session_id')
 
-        
-        console.log(session_id)
+        let stream
         
         function display_users(users){
             users_list = document.querySelector('.users-list')
@@ -76,13 +77,29 @@
         async function session_controls(play){
             if(play === true){
 
-                const stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always" } })
+                stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always" } })
+                stream.getVideoTracks()[0].addEventListener('ended', async () => {
+                    
+                    try{
+                        const {data} = await axios.patch(`/sessions/${session_id}`, {active: false})
+                        
+                        if (data) {
+                            new Toast({msg : data.detail, type : 'success'})
+                        } else {
+                            new Toast({msg : 'Something went wrong', type : 'error'})
+                        }
+                    }catch (err){
+                        new Toast({msg : err.response.data.detail, type : 'error'})
+                    }
+                })
                 const peer = createPeer(play)
     
                 stream.getTracks().forEach(track => peer.addTrack(track, stream))
             }else{
-                const {data} = await axios.post(`/sessions/${session_id}`, {play: false})
-                console.log(data)
+                if(stream){
+                    stream.getTracks().forEach(track => track.stop())
+                }
+                
             }
         }
 
