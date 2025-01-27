@@ -2,7 +2,7 @@
 const express = require('express')
 
 const { User, Session } = require('./database.js')
-const { createPeer } = require('./webrtc.js')
+const { WebRTCConnection } = require('./webrtc.js')
 const { authenticateToken, authenticateHost} = require('./authentication.js')
 const { raise404 } = require('./utils.js')
 
@@ -83,16 +83,17 @@ session_router.patch('/:session', parseSession, authenticateToken, authenticateH
     if(active === true){
         console.log("Let's start a session")
         
-        const peer = await createPeer({
-            type : 'broadcaster', 
-            sdp : sdp, 
-            session : session
+        const connection = new WebRTCConnection({
+            session : session,
+            sdp : sdp,
+            type : 'broadcaster'
         })
+        await connection.open()
     
         session.active = true
         res.json({
             detail : "Session started successfully",
-            sdp: peer.localDescription
+            sdp: connection.peer.localDescription
         })
         return
     }
@@ -100,17 +101,9 @@ session_router.patch('/:session', parseSession, authenticateToken, authenticateH
         console.log("Let's close a session")
         session.active = false
 
-        console.log(session.broadcaster)
-        console.log(session.broadcast)
-
-        session.broadcaster.getSenders().forEach(sender => session.broadcaster.removeTrack(sender));
-        session.broadcaster.getTransceivers().forEach(transceiver => transceiver.stop());
-        session.broadcaster.close();
-        session.broadcaster = null;
+        session.broadcaster.close()
 
         session.end_time = new Date()
-
-        console.log(session.broadcaster)
 
         res.json({
             detail : "Session ended successfully"
@@ -124,13 +117,16 @@ session_router.post('/:session', parseSession, authenticateToken, async ({user, 
     user.session = session
 
     if(session.active === true){
-        const peer = await createPeer({
-            type : 'viewer', 
+       
+        const connection = new WebRTCConnection({
+            session : session,
             sdp : sdp,
-            session : session
+            type : 'viewer'
         })
+        await connection.open()
+
         const payload = {
-            sdp: peer.localDescription,
+            sdp: connection.peer.localDescription,
             detail: "Session joined successfully"
         }
     

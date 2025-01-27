@@ -105,7 +105,7 @@ const options = {
     cert : fs.readFileSync("cert.pem")
 }
 
-https.createServer(options, app).listen(443, () => {
+https.createServer(options, app).listen(443, '0.0.0.0', () => {
     console.log('Server started')
 
     access_code = generateHostAccessCode()
@@ -120,7 +120,7 @@ https.createServer(options, app).listen(443, () => {
 
     }, 30000)
 
-    const url = `https://localhost:${443}${HOST_ACCESS_PATH}.html`;
+    const url = `https://screenshare.net${HOST_ACCESS_PATH}.html`;
     if (process.platform === 'win32') {
         exec(`start ${url}`); // Windows
     } else if (process.platform === 'darwin') {
@@ -158,3 +158,58 @@ https.createServer(options, app).listen(443, () => {
 
     
 // })
+
+
+// // User
+// {
+//     name : 'Franck',
+//     password : 'secret' | null, 
+//     role : 'admin' | 'user',
+//     score : 48,
+// }
+
+// // Quiz
+// {
+//     id : 0,
+//     name : 'blabla',
+//     questions : [
+//         {
+//             id : 0,
+//             question : 'bla?',
+//             img : url,
+//             possibilities : ['sd', 'sf', 'fuck'],
+//             answer : 1
+//         },
+//         {
+//             id : 1,
+//             question : 'bla?',
+//             img : url,
+//             possibilities : ['sd', 'sf', 'fuck'],
+//             answer : 0
+//         }
+//     ],
+//     users : [],
+// }
+
+// /response
+// {
+//     quizz_id : 0,
+//     quesrion_id : 1,
+//     answer : 2
+// }
+
+// {
+//     result : false,
+//     corret_answer : 1
+// }
+
+// // // /quizzes/0
+// // {
+// //     name : 'new name'
+// //     // questions : [
+// //     //     {
+// //     //         id : 1,
+// //     //         question : 'new question?'
+// //     //     }
+// //     // ]
+// // }

@@ -6,6 +6,13 @@
     <title>Gestion du Live - SCREEN SHARE</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="/static/toast.css">
+    <style>
+        #qrcode{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -63,7 +70,11 @@
             const { data } = await axios.get(`/sessions/${session_id}`)
             display_users(data.users)
 
-            new QRCode(document.getElementById("qrcode"), `${window.location.origin}/${data.slug}`);
+            const code = 'WIFI:S:Kyete;T:WPA;P:310800519;H:false;;'
+            
+
+            new QRCode(document.getElementById("qrcode"), `${code}`);
+            // new QRCode(document.getElementById("qrcode"), `${window.location.origin}/${data.slug}`);
 
             document.getElementById("start-btn").addEventListener('click', async () => {
                 session_controls(play=true)
