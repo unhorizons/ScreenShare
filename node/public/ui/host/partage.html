@@ -41,6 +41,7 @@
 
     <script src="/static/toast.js"></script>
     <script src="/static/axios.min.js"></script>
+    <script src="/static/webrtc.js"></script>
     <script src="/static/qrcode.js"></script>
     <script>
         const token = localStorage.getItem('jwt');
@@ -70,11 +71,7 @@
             const { data } = await axios.get(`/sessions/${session_id}`)
             display_users(data.users)
 
-            const code = 'WIFI:S:Kyete;T:WPA;P:310800519;H:false;;'
-            
-
-            new QRCode(document.getElementById("qrcode"), `${code}`);
-            // new QRCode(document.getElementById("qrcode"), `${window.location.origin}/${data.slug}`);
+            new QRCode(document.getElementById("qrcode"), `${window.location.origin}/${data.slug}`);
 
             document.getElementById("start-btn").addEventListener('click', async () => {
                 session_controls(play=true)
@@ -92,7 +89,7 @@
                 stream.getVideoTracks()[0].addEventListener('ended', async () => {
                     
                     try{
-                        const {data} = await axios.patch(`/sessions/${session_id}`, {active: false})
+                        const {data} = await axios.post(`/sessions/end-broadcast/${session_id}`, {})
                         
                         if (data) {
                             new Toast({msg : data.detail, type : 'success'})
@@ -103,41 +100,19 @@
                         new Toast({msg : err.response.data.detail, type : 'error'})
                     }
                 })
-                const peer = createPeer(play)
-    
-                stream.getTracks().forEach(track => peer.addTrack(track, stream))
+                
+                const connection = new WebRTCConnection({
+                    session : session_id,
+                    type : 'broadcaster',
+                    stream : stream
+                })
+                await connection.open()
             }else{
                 if(stream){
                     stream.getTracks().forEach(track => track.stop())
                 }
                 
             }
-        }
-
-        function createPeer(){
-            const peer = new RTCPeerConnection({
-                iceServers : [
-                    {
-                        urls: "stun:stun.stunprotocol.org"
-                    }
-                ]
-            })
-            peer.onnegotiationneeded = () => handleNegotiationNeededEvent(peer)
-
-            return peer
-        }
-
-        async function handleNegotiationNeededEvent(peer) {
-            const offer = await peer.createOffer()
-            await peer.setLocalDescription(offer)
-            const payload = {
-                active : true,
-                sdp: peer.localDescription
-            }
-
-            const { data } = await axios.patch(`/sessions/${session_id}`, payload)
-            const desc = new RTCSessionDescription(data.sdp)
-            peer.setRemoteDescription(desc).catch(e => console.log(e))
         }
 
     </script>

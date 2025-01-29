@@ -1,0 +1,161 @@
+Le fichier ScreenShare/node/public/static/webrtc.js contienr la classe WebRTCConnection pour etablir la connexion avec le serveur
+Axios doit etre importé avant webrtc.js (ScreenShare/node/public/static/axios.min.js)
+
+
+
+POST    /users/                                 Enregistrer un nouvel utilisateur
+
+GET     /sessions/                              Lister toutes les sessions.
+POST    /session/                               Créer une nouvelle session (nécessite un jeton valide et une authentification en tant qu'hôte).
+
+GET     /sessions/:session                      Obtenir les détails d'une session spécifique par session_id ou slug.
+
+POST    /sessions/start-broadcast/:session      Démarrer une diffusion pour une session (nécessite un jeton valide et une authentification en tant qu'hôte).
+POST    /sessions/end-broadcast/:session        Terminer la diffusion pour une session (nécessite un jeton valide et une authentification en tant qu'hôte).
+POST    /sessions/join-broadcast/:session       Rejoindre une diffusion en tant que spectateur (nécessite un jeton valide).
+
+
+
+
+
+
+API Utilisateurs
+
+POST /users/
+    Description : Enregistrer un nouvel utilisateur et émettre un jeton.
+        Requête :
+            {
+            "username": "string"
+            }
+        Réponse :
+            {
+            "token": "string",
+            "detail": "Utilisateur enregistré avec succès"
+            }
+    Code de statut en cas de succès : 200
+    Code de statut en cas d'erreur : 400 (pour une requête invalide)
+
+
+API Sessions
+
+GET /sessions/
+    Description : Lister toutes les sessions.
+        Réponse :
+            [
+            {
+                "id": "string",
+                "workshop": "string",
+                "lead": "string",
+                "start_time": "string",
+                "end_time": "string",
+                "active": "boolean",
+                "slug": "string",
+                "users": [
+                {
+                    "username": "string",
+                    "session": "string"
+                }
+                ]
+            }
+            ]
+    Code de statut en cas de succès : 200
+
+
+GET /sessions/:session
+    Description : Obtenir les détails d'une session spécifique par session_id ou slug.
+        Réponse :
+            {
+            "id": "string",
+            "workshop": "string",
+            "lead": "string",
+            "start_time": "string",
+            "end_time": "string",
+            "active": "boolean",
+            "slug": "string",
+            "users": [
+                {
+                "username": "string",
+                "session": "string"
+                }
+            ]
+            }
+    Code de statut en cas de succès : 200
+    Code de statut en cas d'erreur : 404 (si la session n'est pas trouvée)
+
+
+POST /sessions/
+    Description : Créer une nouvelle session (nécessite un jeton valide et une authentification en tant qu'hôte).
+        Corps de la requête :
+            {
+            "workshop": "string"
+            }
+        Réponse :
+            {
+            "session_id": "string",
+            "detail": "Session créée avec succès"
+            }
+    Code de statut en cas de succès : 200
+    Code de statut en cas d'erreur : 400 (si la session existe déjà)
+
+
+POST /sessions/start-broadcast/:session
+    Description : Démarrer une diffusion pour une session (nécessite un jeton valide et une authentification en tant qu'hôte).
+    Pour commencer une diffusion(live) le client doit etablir une WebRTCConnection
+    Ex : 
+        stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always" } })    
+        const connection = new WebRTCConnection({
+            session : session_id,
+            type : 'broadcaster',
+            stream : stream
+        })
+        await connection.open()
+    Ce code va se charger d'appeler automatiquement la route /start-broadcast/:session
+
+        Corps de la requête :
+            {
+            "sdp": "string"
+            }
+        Réponse :
+            {
+            "detail": "Session démarrée avec succès",
+            "sdp": "string"
+            }
+    Code de statut en cas de succès : 200
+    Code de statut en cas d'erreur : 400 (si la session est déjà active)
+
+
+POST /sessions/end-broadcast/:session
+    Description : Terminer la diffusion pour une session (nécessite un jeton valide et une authentification en tant qu'hôte).
+        Réponse :
+            {
+            "detail": "Session terminée avec succès"
+            }
+    Code de statut en cas de succès : 200
+    Code de statut en cas d'erreur : 400 (si la session n'est pas active)
+
+
+POST /sessions/join-broadcast/:session
+    Description : Rejoindre une diffusion en tant que spectateur (nécessite un jeton valide).
+    Pour joindre une diffusion (live), le client doit etablir une WebRTCConnection
+    Ex : 
+        const connection = new WebRTCConnection({
+            session : session_id,
+            type : 'viewer',
+        })
+        await connection.open()
+    Ce code va se charger d'appeler automatiquement la route /join-broadcast/:session
+        Corps de la requête :
+            {
+            "sdp": "string"
+            }
+        Réponse :
+            {
+            "sdp": "string",
+            "detail": "Session rejointe avec succès"
+            }
+        Réponse d'erreur :
+            {
+            "detail": "Session non encore commencée"
+            }
+    Code de statut en cas de succès : 200
+    Code de statut en cas d'erreur : 404 (si la session n'a pas encore commencé)

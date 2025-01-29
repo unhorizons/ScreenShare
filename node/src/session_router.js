@@ -69,50 +69,60 @@ session_router.post('/', authenticateToken, authenticateHost, async ({user, body
     }
 })
 
-// Start or end a session
-session_router.patch('/:session', parseSession, authenticateToken, authenticateHost, async({body : {active, sdp}, session}, res) => {
-
+// Start a broadcast
+session_router.post('/start-broadcast/:session', parseSession, authenticateToken, authenticateHost, async ({body : {sdp}, session}, res) => {
+   
     console.log("Hi, this is session control")
-    if(active === session.active){
+    if(session.active === true){
         console.log("Looks like there is nothing to do")
-        res.json({
+        return res.json({
             detail : "No change made to the session"
         })
-        return
     }
-    if(active === true){
-        console.log("Let's start a session")
-        
-        const connection = new WebRTCConnection({
-            session : session,
-            sdp : sdp,
-            type : 'broadcaster'
-        })
-        await connection.open()
+  
+    console.log("Let's start a session")
     
-        session.active = true
-        res.json({
-            detail : "Session started successfully",
-            sdp: connection.peer.localDescription
-        })
-        return
-    }
-    if(active === false){
-        console.log("Let's close a session")
-        session.active = false
+    const connection = new WebRTCConnection({
+        session : session,
+        sdp : sdp,
+        type : 'broadcaster'
+    })
+    await connection.open()
 
-        session.broadcaster.close()
-
-        session.end_time = new Date()
-
-        res.json({
-            detail : "Session ended successfully"
-        })
-    }
+    session.active = true
+    res.json({
+        detail : "Session started successfully",
+        sdp: connection.peer.localDescription
+    })
+    
 })
 
-// Join a session
-session_router.post('/:session', parseSession, authenticateToken, async ({user, session, body : {sdp}}, res) => {
+// End a broadcast
+session_router.post('/end-broadcast/:session', parseSession, authenticateToken, authenticateHost, async ({session}, res) => {
+    console.log("Hi, this is session control")
+    if(session.active === false){
+        console.log("Looks like there is nothing to do")
+        return res.json({
+            detail : "No change made to the session"
+        })
+    }
+
+
+    console.log("Let's close a session")
+    session.active = false
+
+    session.broadcaster.close()
+
+    session.end_time = new Date()
+
+    res.json({
+        detail : "Session ended successfully"
+    })
+    
+})
+
+// Join a broadcast
+session_router.post('/join-broadcast/:session', parseSession, authenticateToken, async ({user, session, body : {sdp}}, res) => {
     
     user.session = session
 
@@ -130,8 +140,8 @@ session_router.post('/:session', parseSession, authenticateToken, async ({user, 
             detail: "Session joined successfully"
         }
     
-        res.json(payload)
-        return
+        return res.json(payload)
+        
     }
 
     res.json({

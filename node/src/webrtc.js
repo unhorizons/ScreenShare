@@ -93,5 +93,5 @@ class WebRTCConnection{
 }
 
 module.exports = {
-    createPeer, WebRTCConnection
+    WebRTCConnection
 }
