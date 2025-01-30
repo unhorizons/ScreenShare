@@ -7,7 +7,9 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+data.db
 node_modules
+__pycache__
 dist
 dist-ssr
 *.local
