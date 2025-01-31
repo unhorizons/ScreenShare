@@ -21,6 +21,24 @@ function generateToken(user) {
   return jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '3h' });
 }
 
+async function sseAuthenticateToken(req, res, next) {
+    const token = req.query.token;
+    if (!token) return res.status(401).end();
+    
+    try {
+        userdata = jwt.verify(token, process.env.JWT_SECRET)
+        const user = User.get(userdata.id)
+    
+        if(!user) return res.sendStatus(401)
+    
+        req.user = user;
+
+    } catch(err) {
+        console.log(err)
+        return res.sendStatus(403)
+    }
+    next()
+}
 
 // Middleware to Verify Token
 async function authenticateToken(req, res, next) {
@@ -57,5 +75,5 @@ function authenticateHost(req, res, next) {
 
 
 module.exports = {
-    generateToken, authenticateToken, generateHostAccessCode, authenticateHost
+    generateToken, authenticateToken, generateHostAccessCode, authenticateHost, sseAuthenticateToken
 }

@@ -1,3 +1,6 @@
+const EventEmitter = require("events");
+const databaseevent = new EventEmitter();
+
 const database = {
     sessions : [],
     users : []
@@ -22,7 +25,7 @@ class Session extends BaseModel{
     lead
     start_time
     end_time
-    active
+    _active
     slug
     broadcaster
     broadcast
@@ -48,12 +51,20 @@ class Session extends BaseModel{
         this.broadcast = null
         this.broadcaster = null
         this.lead = lead
-        this.active = false
+        this._active = false
         this.start_time = new Date(Date.now())
         this.end_time = null
         
         this.id = database.sessions.length
         database.sessions.push(this)
+    }
+
+    get active(){
+        return this._active
+    }
+    set active(active){
+        this._active = active
+        databaseevent.emit('updated', this)
     }
 
 
@@ -78,7 +89,7 @@ class User extends BaseModel{
 
     id
     username
-    session
+    _session
     role
 
     constructor({username, session, role='member'}){
@@ -92,14 +103,22 @@ class User extends BaseModel{
 
         if(session != undefined){
             if(session instanceof Session){
-                this.session = session
+                this._session = session
             }else{
-                this.session = database.sessions[session]
+                this._session = database.sessions[session]
             }
         }
         
         this.id = database.users.length
         database.users.push(this)
+    }
+
+    get session(){
+        return this._session
+    }
+    set session(session){
+        this._session = session
+        databaseevent.emit('updated', session)
     }
 
     static get(id){
@@ -116,5 +135,6 @@ class User extends BaseModel{
 module.exports = {
     User,
     Session,
-    database
+    database,
+    databaseevent
 }

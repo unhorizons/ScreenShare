@@ -55,7 +55,7 @@ function AddSession({tools}){
             <form className="container" onSubmit={handleSubmit}>
                 <div className="input-box">
                     <label>Entrez le nom de l&apos;atelier</label>
-                    <input type="text" name="workshop" id="workshop"></input>
+                    <input type="text" name="workshop" id="workshop" required></input>
                 </div>
                 <button type="submit">Go</button>
             </form>

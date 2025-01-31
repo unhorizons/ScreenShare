@@ -4,14 +4,19 @@ import clublogo from "../../assets/club-logo.png";
 import screensharelogo from "../../assets/screenshare-logo.png"; 
 
 import { /*useState,*/ useEffect, useCallback, useState } from 'react';
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import PropTypes from "prop-types"
 import { utils } from "../../utils";
 
 function UserLogin({tools}){
     const navigate = useNavigate()
-    const { session_id } = useParams()
+    // const { session_id } = useParams()
     const [ loading, setLoading ] = useState(true) 
+
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+
+    const session_id = queryParams.get('session_id'); 
 
     useEffect(() => {
         const updateSession = async () => {
@@ -19,7 +24,7 @@ function UserLogin({tools}){
             setLoading(false)
         }
         updateSession()
-    }, [session_id])
+    }, [])
 
     const login = useCallback(async (event) => {
         event.preventDefault(); 

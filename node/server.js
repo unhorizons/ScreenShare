@@ -97,8 +97,8 @@ app.post('/host-login', ({body : {username, code}}, res) => {
 })
 
 
-app.get('/:session_slug', ({params : {session_slug}}, res) => {
-    res.redirect(301, `/ui/client/pseudo.html?session_id=${session_slug}`)
+app.get('/live/:session_slug', ({params : {session_slug}}, res) => {
+    res.redirect(301, `/?session_id=${session_slug}`)
 })
 
 
@@ -122,7 +122,7 @@ https.createServer(options, app).listen(443, '0.0.0.0', () => {
 
     }, 30000)
 
-    const url = `https://screenshare.net${HOST_ACCESS_PATH}.html`;
+    const url = `https://screenshare.net/`;
     if (process.platform === 'win32') {
         exec(`start ${url}`); // Windows
     } else if (process.platform === 'darwin') {

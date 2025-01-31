@@ -2,9 +2,7 @@
 import Home from './components/Home'
 import Live from './components/users/Live'
 import AddSession from './components/dashboard/AddSession'
-import UserLogin from './components/users/UserLogin.jsx'
-import Share from './components/dashboard/Share'
-import Qrcode from './components/users/Qrcode'
+import UserLogin from './components/users/UserLogin'
 import SessionControl from './components/dashboard/SessionControl'
 import HostLogin from './components/dashboard/HostLogin'
 
@@ -68,14 +66,12 @@ function App() {
         {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
         <Routes>
         <Route path="/" element={<Home></Home>}></Route>
-        <Route path="/HostLogin" element={<HostLogin tools={tools}></HostLogin>}></Route>
+        <Route path="/host-login" element={<HostLogin tools={tools}></HostLogin>}></Route>
         <Route path="/add-session" element={<AddSession tools={tools}></AddSession>}></Route>
         <Route path="/session-control" element={<SessionControl session={session} tools={tools}></SessionControl>}></Route>
         <Route path="/live" element={<Live session={session} tools={tools}></Live>}></Route>
-        <Route path="/:session_id" element={<UserLogin tools={tools}></UserLogin>}></Route>
+        <Route path="/user-login" element={<UserLogin tools={tools}></UserLogin>}></Route>
 
-        <Route path="/Qrcode" element={<Qrcode></Qrcode>}></Route>
-        <Route path="/share" element={<Share></Share>}></Route>
         </Routes>
         </>
     )

@@ -3,20 +3,22 @@
 
 import clublogo from "../../assets/club-logo.png"; 
 import screensharelogo from "../../assets/screenshare-logo.png"; 
+import screenshareicon from "../../assets/club-icon.png"; 
 import { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types'
 
 import styles from '../../styles/SessionControl.module.css';
 
-import QRCode from 'qrcode';
-import { WebRTCConnection } from "../../utils.js";
+// import QRCode from 'qrcode';
+import { QRCodeCanvas } from "qrcode.react";
+import { utils, WebRTCConnection } from "../../utils.js";
 
 let stream
 
 function SessionControl({session, tools}){
 
-    const [qrcode, setQRCode] = useState(null)
     const [qrcodeurls, setQRCodeUrl] = useState('')
+    const [loading, setLoading] = useState(true)
 
     let viewers = null
     if(session.users){
@@ -30,18 +32,23 @@ function SessionControl({session, tools}){
     }
 
     useEffect(() => {
-        if(session.slug){
+        if(loading && session.slug){
 
-            setQRCodeUrl(`https://screenshare.net/${session.slug}`)
-            QRCode.toDataURL(`https://screenshare.net/${session.slug}`, {width : 200})
-            .then(dataUrl => {
-                setQRCode(dataUrl)
-            })
-            .catch(err => tools.setToast({msg : err, type : 'error'}))
+            setQRCodeUrl(`${utils.apiurl}/${session.slug}`)
+
+            const eventSource = new EventSource(`${utils.apiurl}/sessions/${session.slug}/events?token=${utils.token}`);
+
+            eventSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                tools.updateSession({session:data})
+            };
+            setLoading(false)
+
+            // return () => eventSource.close(); // Cleanup on unmount
         }
         
         
-      }, [session, tools])
+      }, [session])
 
 
     const startSession = useCallback(async () => {
@@ -75,6 +82,9 @@ function SessionControl({session, tools}){
         await tools.updateSession({})
     }
 
+    if(loading)
+        return(<div className="screen-share-title"><img src={screensharelogo}/>Loading...</div>)
+
     return( 
     <>
         <div className="header">
@@ -82,14 +92,21 @@ function SessionControl({session, tools}){
             <img className="club-logo" src={clublogo}/>
         </div>
         <div className={styles.controls}>
-            <h2 className={styles.head}> <div className={`${styles.livebubble} ${session.active ? styles.active : ''}`}></div>En cours...</h2>
+            
+            {session.active && <h2 className={styles.head}> <div className={`${styles.livebubble} ${styles.active}`}></div>En cours...</h2>}
+            {!session.active && <h2 className={styles.head}> <div className={`${styles.livebubble}`}></div>Deconnecté</h2>}
+
             <div className={styles.btns}>
                 <button onClick={endSession}>Arreter</button>
                 <button onClick={startSession}>Commencer</button>
             </div>
             <div className={styles.qrcode}>
 
-                <img  src={qrcode}/>
+                <div className={styles.img}>
+                    <img src={screenshareicon}/>
+                    <QRCodeCanvas value={qrcodeurls} size={200} />    
+                </div>
+                
                 <div>{qrcodeurls}</div>
             </div>
         </div>

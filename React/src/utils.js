@@ -1,8 +1,9 @@
 import axios from "axios";
 
+const apiurl = "https://screenshare.net"
 
 export const api = axios.create({
-    baseURL: "https://screenshare.net", // Replace with your API URL
+    baseURL: apiurl, // Replace with your API URL
 });
 
 
@@ -96,6 +97,9 @@ export const utils = {
     set token(token){
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`
         localStorage.setItem('jwt', token)
+    },
+    get apiurl(){
+        return apiurl
     }
 }
 

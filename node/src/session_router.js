@@ -1,9 +1,9 @@
 
 const express = require('express')
 
-const { User, Session } = require('./database.js')
+const { User, Session, databaseevent } = require('./database.js')
 const { WebRTCConnection } = require('./webrtc.js')
-const { authenticateToken, authenticateHost} = require('./authentication.js')
+const { authenticateToken, authenticateHost, sseAuthenticateToken} = require('./authentication.js')
 const { raise404 } = require('./utils.js')
 
 const session_router = express.Router()
@@ -48,7 +48,54 @@ session_router.get('/:session', parseSession, async ({session}, res) => {
         slug: session.slug,
         users: users
     })
-})
+}) 
+
+// SSE Route
+session_router.get("/:session/events", parseSession, sseAuthenticateToken, authenticateHost, (req, res) => {
+
+    
+    const headers = {
+        'Content-Type': 'text/event-stream',
+        'Connection': 'keep-alive',
+        'Cache-Control': 'no-cache'
+    };
+    res.writeHead(200, headers);
+    
+    const session = req.session
+
+    console.log(`Opened at [${new Date().toLocaleString()}]`)
+
+    databaseevent.on('updated', (data) => {
+        if(data.id === session.id){
+            users = []
+            for(user of User.all()){
+                if(user.session == session){
+                    users.push(user)
+                }
+            } 
+        
+            const session_data = {
+                id: session.id,
+                workshop: session.workshop,
+                lead: session.lead,
+                start_time: session.start_time,
+                end_time: session.end_time,
+                active: session.active,
+                slug: session.slug,
+                users: users
+            }
+
+            res.write(`data: ${JSON.stringify(session_data)}\n\n`);
+        }
+    })
+
+
+    // Cleanup on client disconnect
+    req.on("close", () => {
+        console.log(`Closed at [${new Date().toLocaleString()}]`)
+    });
+});
+
 
 // Create a new session
 session_router.post('/', authenticateToken, authenticateHost, async ({user, body : {workshop}}, res) => {
