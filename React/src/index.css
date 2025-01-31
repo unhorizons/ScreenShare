@@ -1,37 +1,109 @@
 /* Style général */
+
+@font-face {
+    font-family: Inter;
+    src: url("./assets/inter.ttf");
+}
+*{
+    font-family: Inter;
+    box-sizing: border-box;
+}
 body {
-    font-family: Arial, sans-serif;
     background-color: #001828;
     color: white;
     margin: 0;
     padding: 0;
+    height: 100vh;
+    width: 100vw;
+    height: 100svh;
+    width: 100svw;
+}
+#root{
+    display: flex;
+    height: 100%;
+    width: 100%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    align-items: center;
+}
+.screen-share-title{
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    margin: 0;
+    margin-top: 10px;
+    margin-bottom: 30px;
+
+    font-style: normal;
+    font-weight: 700;
+    font-size: 40px;
+
+    background: linear-gradient(90deg, #FFEA07 20%, #4AE4FF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+
 }
 
-/* Section principale */
+.screen-share-title img{
+    width: 72px;
+}
+img.club-logo{
+    width: 150px;
+    height: 150px;
+
+}
+
+a {
+    display: block;
+    margin-top: 20px;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+a:hover {
+    text-decoration: underline;
+}
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 30px;
+    border-radius: 15px;
+    background-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+    /* max-width: 400px; */
+    
+    border: 2px solid #00bfff;
+}
+/* Section principale */
+
+
+
+
+Titre principal
+h1 {
+    color: white;
+    font-weight: bold;
 }
 
-/* Titre principal */
-h1 {
-    font-size: 2.5rem;
-    color: #3AC6FF;
-    margin-bottom: 20px;
-}
 
 /* Boutons */
 button, .btn {
-    background: linear-gradient(to right, #F5C644, #14E4A3,#3AC6FF);
+    background: linear-gradient(90deg, #FFEA07 20%, #4AE4FF 100%);
     border: none;
-    color: white;
+    color: #001828;
     padding: 10px 20px;
     font-size: 1rem;
-    border-radius: 5px;
+    font-weight: 700;
+    border-radius: 10px;
     cursor: pointer;
     margin-top: 10px;
+    width: clamp(100px, 15rem, 300px);
+    text-align: center;
 }
 
 button:hover, .btn:hover {
@@ -39,14 +111,32 @@ button:hover, .btn:hover {
 }
 
 /* Formulaires */
+form{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+label{
+    margin-right: auto;
+    margin-left: 8px;
+}
+.input-box{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    width: clamp(100px, 15rem, 100%);
+    margin-bottom: 16px;
+}
+
 input {
-    background-color: #0A1A2E;
-    border: 1px solid #3AC6FF;
-    border-radius: 5px;
+    background-color: #3C5E74;
+    border: none;
+    border-radius: 10px;
     padding: 10px;
-    width: 100%;
     color: white;
-    margin-bottom: 20px;
 }
 
 input:focus {
@@ -149,3 +239,5 @@ input:focus {
 .qr-section a:hover {
     text-decoration: underline;
 }
+
+

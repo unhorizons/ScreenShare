@@ -58,6 +58,16 @@ session_router.post('/', authenticateToken, authenticateHost, async ({user, body
         const session = new Session({workshop, lead : user.username})
         res.json({
             session_id : session.id, 
+            session : {
+                id: session.id,
+                workshop: session.workshop,
+                lead: session.lead,
+                start_time: session.start_time,
+                end_time: session.end_time,
+                active: session.active,
+                slug: session.slug,
+                users: []
+            },
             detail : "Session created successfully"
         })
 

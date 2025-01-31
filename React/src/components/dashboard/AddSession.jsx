@@ -1,17 +1,15 @@
 import { useNavigate } from "react-router-dom";
-import PropTypes from "prop-types"
+// import { useState } from 'react';
+import PropTypes from 'prop-types'
 
-import '../../styles/HostLogin.module.css';
 import clublogo from "../../assets/club-logo.png"; 
 import screensharelogo from "../../assets/screenshare-logo.png"; 
-// import { useState } from 'react';
 
 import {api} from "../../utils.js"
-
 // import Toast from "../Toast.jsx"
+ 
+function AddSession({tools}){
 
-const HostLogin = ({tools}) => {
-    // logique a supprime une fois le backend sera fait
     const navigate = useNavigate()
     // const [toast, setToast] = useState(null)
 
@@ -27,54 +25,47 @@ const HostLogin = ({tools}) => {
         });
 
         try{
-            const { data } = await api.post('/host-login', formobject)
-            if (data.token) {
-                tools.updateToken(data.token)
-                navigate("/add-session"); 
+            const { data } = await api.post('/sessions', formobject)
+            if(data.session != undefined){
+                await tools.updateSession({
+                    session : data.session
+                })
+                navigate("/session-control"); 
             } else {
-                tools.setToast({ msg: "Login failed : no token received", type: "error" })
+                tools.setToast({ msg: "No session id received", type: "error" })
             }
         }catch (err){
-            console.error(err)
-            if(err.response && err.response.data)
+            if(err.response.data)
                 tools.setToast({ msg: err.response.data.detail, type: "error" })
             else
                 tools.setToast({ msg: "Something went wrong", type: "error" })
         }
+    };
 
-    }
-
-    return(
+    return (
         <>
         {/* {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />} */}
-
         <div className="header">
             <div className="screen-share-title"><img src={screensharelogo} />SCREEN SHARE</div>
             <img className="club-logo" src={clublogo}/>
         </div>
-        
-        <div className="container">
 
-            <h1>Connexion</h1>
-            <form id="host-form" onSubmit={handleSubmit}>
+        <section className="template new-session">
+            <h2>Nouvelle session</h2>
+            <form className="container" onSubmit={handleSubmit}>
                 <div className="input-box">
-                    <label htmlFor="username">Nom</label>
-                    <input type="text" name="username" id="username" required></input>
-                </div>
-                <div className="input-box">
-                    <label htmlFor="code">Code d&apos;access</label>
-                    <input type="text" name="code" id="code" required></input>
+                    <label>Entrez le nom de l&apos;atelier</label>
+                    <input type="text" name="workshop" id="workshop"></input>
                 </div>
                 <button type="submit">Go</button>
             </form>
-        </div>
-
+        </section>
         </>
     )
 }
 
-HostLogin.propTypes = {
+AddSession.propTypes = {
     tools : PropTypes.object.isRequired
 }
 
-export default HostLogin
+export default AddSession

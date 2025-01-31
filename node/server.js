@@ -7,6 +7,7 @@ const fs = require('fs')
 const https = require('https')
 
 const { exec } = require('child_process');
+const cors = require("cors");
 
 
 const { User } = require('./src/database.js')
@@ -16,6 +17,7 @@ const { session_router } = require('./src/session_router.js');
 const { user_router } = require('./src/user_router.js');
 
 const app = express()
+app.use(cors())
 
 const PORT = 5000 
 let access_code

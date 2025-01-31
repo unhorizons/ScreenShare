@@ -1,0 +1,26 @@
+:global(.header){
+    display: flex;
+    flex-direction: row;
+
+    justify-content: space-between;
+    align-items: center;
+
+    width: 100%;
+    padding: 0 150px;
+    max-width: 1000px;
+}
+:global(.container){
+    max-width: 400px;
+}
+
+h1{
+    background: linear-gradient(90deg, #FFEA07 20%, #4AE4FF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+}
+
+button{
+    width: 120px;
+}
