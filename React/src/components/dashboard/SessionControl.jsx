@@ -6,7 +6,7 @@ import screensharelogo from "../../assets/screenshare-logo.png";
 import { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types'
 
-import styles from '../../styles/Live.module.css';
+import styles from '../../styles/SessionControl.module.css';
 
 import QRCode from 'qrcode';
 import { WebRTCConnection } from "../../utils.js";
@@ -16,13 +16,30 @@ let stream
 function SessionControl({session, tools}){
 
     const [qrcode, setQRCode] = useState(null)
+    const [qrcodeurls, setQRCodeUrl] = useState('')
 
-    console.log(session)
+    let viewers = null
+    if(session.users){
+        viewers = session.users.map(viewer =>
+            <div key={viewer.id} className={styles.viewer}>
+                <div className={styles.profile}>{viewer.username[0]}</div>
+                <span className={styles.livebubble}></span>
+                <div className={styles.name}>{viewer.username}</div>
+            </div>
+        )
+    }
 
     useEffect(() => {
-        QRCode.toDataURL(`sreenshare.net/${session.slug}`, {width : 200})
-        .then(dataUrl => setQRCode(dataUrl))
-        .catch(err => tools.setToast({msg : err, type : 'error'}))
+        if(session.slug){
+
+            setQRCodeUrl(`https://screenshare.net/${session.slug}`)
+            QRCode.toDataURL(`https://screenshare.net/${session.slug}`, {width : 200})
+            .then(dataUrl => {
+                setQRCode(dataUrl)
+            })
+            .catch(err => tools.setToast({msg : err, type : 'error'}))
+        }
+        
         
       }, [session, tools])
 
@@ -48,12 +65,14 @@ function SessionControl({session, tools}){
             }
         })
         connection.open()
+        await tools.updateSession({})
     }, [session, tools])
 
     const endSession = async () => {
         if(stream){
             stream.getTracks().forEach(track => track.stop())
         }
+        await tools.updateSession({})
     }
 
     return( 
@@ -63,31 +82,21 @@ function SessionControl({session, tools}){
             <img className="club-logo" src={clublogo}/>
         </div>
         <div className={styles.controls}>
-            <h2 className={styles.head}> <div className={`${styles.livebubble} ${styles.active}`}></div>En cours...</h2>
+            <h2 className={styles.head}> <div className={`${styles.livebubble} ${session.active ? styles.active : ''}`}></div>En cours...</h2>
             <div className={styles.btns}>
                 <button onClick={endSession}>Arreter</button>
                 <button onClick={startSession}>Commencer</button>
             </div>
-            <img className={styles.qrcode} src={qrcode}/>
+            <div className={styles.qrcode}>
+
+                <img  src={qrcode}/>
+                <div>{qrcodeurls}</div>
+            </div>
         </div>
         <div className={styles.footer}>
             <h2>Participants</h2>
             <div className={styles.viewers}>
-                <div className={styles.viewer}>
-                    <div className={styles.profile}></div>
-                    <span className={styles.livebubble}></span>
-                    <div className={styles.name}>Franck</div>
-                </div>
-                <div className={styles.viewer}>
-                    <div className={styles.profile}></div>
-                    <span className={styles.livebubble}></span>
-                    <div className={styles.name}>Franck</div>
-                </div>
-                <div className={styles.viewer}>
-                    <div className={styles.profile}></div>
-                    <span className={styles.livebubble}></span>
-                    <div className={styles.name}>Franck</div>
-                </div>
+                {viewers}
             </div>
         </div>
     </>)

@@ -48,25 +48,20 @@ const webrtc = require('wrtc')
 class WebRTCConnection{
     peer
     stream
-    session
 
-    constructor({session, sdp, type}){
-        this.session = session
+    constructor({sdp, type}){
+        
         this.sdp = sdp
         this.type = type
     }
 
-    async open(){
+    async open({session}){
         this.peer = new webrtc.RTCPeerConnection({
-            iceServers: [
-                {
-                    urls: "stun:stun.stunprotocol.org"
-                }
-            ]
+            iceServers: [{urls: "stun:stun.stunprotocol.org"}]
         })
         
         if (this.type === 'broadcaster'){
-            this.session.broadcaster = this
+            session.broadcaster = this
             this.peer.ontrack = (e) => {
                 this.stream = e.streams[0]
             }
@@ -76,7 +71,7 @@ class WebRTCConnection{
         await this.peer.setRemoteDescription(desc)
     
         if (this.type === 'viewer'){
-            this.session.broadcaster.stream.getTracks().forEach(track => this.peer.addTrack(track, this.session.broadcaster.stream))
+            session.broadcaster.stream.getTracks().forEach(track => this.peer.addTrack(track, session.broadcaster.stream))
         }
     
         const answer = await this.peer.createAnswer()

@@ -1,0 +1,91 @@
+/* Live.module.css */
+.controls{
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    grid-template-rows: 2fr 2fr;
+    grid-template-areas: 
+    "header qrcode"
+    "btns qrcode";
+    gap: 15px;
+}
+
+.head{
+    grid-area: header;
+}
+.btns{
+    display: flex;
+    align-items: end;
+    grid-area: btns;
+    gap: 12px;
+    padding: 0;
+    border-radius: 15px;
+    /* background-color: rgba(255, 255, 255, 0.08); */
+}
+.qrcode{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    grid-area: qrcode;
+
+}
+.qrcode img{
+    border-radius: 15px;
+    /* padding: 12px; */
+}
+
+.controls .livebubble{
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 12px;
+    background-color: red;
+}
+.controls .livebubble.active{
+    background-color: green;
+}
+
+.footer{
+    margin-top: auto;
+    padding: 10px 20%;
+    width: 100%;
+    /* max-width: ; */
+    height: 200px;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+.viewers{
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+}
+.viewer{
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 8px;
+}
+.viewer .profile{
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.08);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+    font-size: 32px;
+}
+.viewer .livebubble{
+    bottom: 24px;
+    right: 8px;
+    position: absolute;
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: green;
+}

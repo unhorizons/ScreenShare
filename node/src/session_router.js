@@ -93,11 +93,10 @@ session_router.post('/start-broadcast/:session', parseSession, authenticateToken
     console.log("Let's start a session")
     
     const connection = new WebRTCConnection({
-        session : session,
         sdp : sdp,
         type : 'broadcaster'
     })
-    await connection.open()
+    await connection.open({session})
 
     session.active = true
     res.json({
@@ -139,11 +138,10 @@ session_router.post('/join-broadcast/:session', parseSession, authenticateToken,
     if(session.active === true){
        
         const connection = new WebRTCConnection({
-            session : session,
             sdp : sdp,
             type : 'viewer'
         })
-        await connection.open()
+        await connection.open({session})
 
         const payload = {
             sdp: connection.peer.localDescription,

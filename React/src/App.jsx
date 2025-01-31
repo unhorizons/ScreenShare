@@ -1,8 +1,8 @@
 // import { useState } from 'react'
 import Home from './components/Home'
-import Login from './components/users/Login'
+import Live from './components/users/Live'
 import AddSession from './components/dashboard/AddSession'
-import Welcome from './components/users/Welcome'
+import UserLogin from './components/users/UserLogin.jsx'
 import Share from './components/dashboard/Share'
 import Qrcode from './components/users/Qrcode'
 import SessionControl from './components/dashboard/SessionControl'
@@ -59,7 +59,6 @@ function App() {
     useEffect(() => {
         const entries = performance.getEntriesByType("navigation")
         if(entries[0]?.type === "reload"){
-            console.log(utils.token)
             tools.updateSession({})
         }
     }, [])
@@ -72,9 +71,9 @@ function App() {
         <Route path="/HostLogin" element={<HostLogin tools={tools}></HostLogin>}></Route>
         <Route path="/add-session" element={<AddSession tools={tools}></AddSession>}></Route>
         <Route path="/session-control" element={<SessionControl session={session} tools={tools}></SessionControl>}></Route>
+        <Route path="/live" element={<Live session={session} tools={tools}></Live>}></Route>
+        <Route path="/:session_id" element={<UserLogin tools={tools}></UserLogin>}></Route>
 
-        <Route path="/login" element={<Login></Login>}></Route>
-        <Route path="/welcome" element={<Welcome></Welcome>}></Route>
         <Route path="/Qrcode" element={<Qrcode></Qrcode>}></Route>
         <Route path="/share" element={<Share></Share>}></Route>
         </Routes>
