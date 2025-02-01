@@ -1,8 +1,9 @@
-import '../styles/Home.module.css';
+// import {styles} from '../styles/Home.module.css';
 import clublogo from "../assets/club-logo.png"; 
 import screensharelogo from "../assets/screenshare-logo.png"; 
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from 'react';
+
 
 function Home(){
     const navigate = useNavigate()
@@ -10,12 +11,13 @@ function Home(){
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
 
-    const session_id = queryParams.get('session_id'); 
+    const route = queryParams.get('route'); 
 
     useEffect(() => {
-        if(session_id != undefined){
-            navigate(`/user-login?session_id=${session_id}`)
+        if(route != undefined){
+            navigate(`/${route}`)
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const go = () => {
@@ -25,7 +27,7 @@ function Home(){
     return(
         <>
             <img className="club-logo" src={clublogo}/>
-            <section className="template welcome-screen">
+            <section className={`template welcome-screen`}>
             
                 <h1>Welcome to</h1>
                 <h2 className="screen-share-title"> <img src={screensharelogo}/> SCREEN SHARE</h2>

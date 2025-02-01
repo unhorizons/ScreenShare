@@ -34,7 +34,7 @@ function SessionControl({session, tools}){
     useEffect(() => {
         if(loading && session.slug){
 
-            setQRCodeUrl(`${utils.apiurl}/${session.slug}`)
+            setQRCodeUrl(`${utils.apiurl}/live/${session.slug}`)
 
             const eventSource = new EventSource(`${utils.apiurl}/sessions/${session.slug}/events?token=${utils.token}`);
 
@@ -48,6 +48,7 @@ function SessionControl({session, tools}){
         }
         
         
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       }, [session])
 
 
@@ -97,7 +98,7 @@ function SessionControl({session, tools}){
             {!session.active && <h2 className={styles.head}> <div className={`${styles.livebubble}`}></div>Deconnecté</h2>}
 
             <div className={styles.btns}>
-                <button onClick={endSession}>Arreter</button>
+                <button disabled onClick={endSession}>Arreter</button>
                 <button onClick={startSession}>Commencer</button>
             </div>
             <div className={styles.qrcode}>

@@ -58,25 +58,6 @@ app.use('/users', user_router)
 
 
 
-app.post('/consumer', async ({body}, res) => {
-    const peer = await createPeer('viewer', body.sdp)
-    const payload = {
-        sdp: peer.localDescription
-    }
-
-    res.json(payload)
-})
-
-
-app.post('/broadcast', async ({body}, res) => {
-    const peer = await createPeer('broadcaster', body.sdp)
-    const payload = {
-        sdp: peer.localDescription
-    }
-
-    res.json(payload)
-})
-
 app.post('/host-login', ({body : {username, code}}, res) => {
     if(code === access_code){
 
@@ -97,8 +78,11 @@ app.post('/host-login', ({body : {username, code}}, res) => {
 })
 
 
-app.get('/live/:session_slug', ({params : {session_slug}}, res) => {
-    res.redirect(301, `/?session_id=${session_slug}`)
+app.get('/live/:session', ({params : {session}}, res) => {
+    res.redirect(301, `/?route=user-login/${session}`)
+})
+app.get('/:route', ({params : {route}}, res) => {
+    res.redirect(301, `/?route=${route}`)
 })
 
 
@@ -133,85 +117,11 @@ https.createServer(options, app).listen(443, '0.0.0.0', () => {
 
 })
 
-// app.listen(PORT, '0.0.0.0', () => {
-    
-//     console.log('Server started')
+const http = require('http');
 
-//     access_code = generateHostAccessCode()
-//     // clipboardy.writeSync(access_code); // Copy the code to the clipboard
-//     console.log(`Your access code is : "${access_code}"` )
-    
-//     access_code_renewer = setInterval(() => {
-//         access_code = generateHostAccessCode()
-//         // clipboardy.writeSync(access_code); // Copy the code to the clipboard
-
-//         console.log(`Renewed access code : "${access_code}"` )
-
-//     }, 30000)
-
-//     const url = `http://localhost:${PORT}${HOST_ACCESS_PATH}.html`;
-//     if (process.platform === 'win32') {
-//         exec(`start ${url}`); // Windows
-//     } else if (process.platform === 'darwin') {
-//         exec(`open ${url}`); // macOS
-//     } else {
-//         exec(`xdg-open ${url}`); // Linux
-//     }
-
-    
-// })
-
-
-// // User
-// {
-//     name : 'Franck',
-//     password : 'secret' | null, 
-//     role : 'admin' | 'user',
-//     score : 48,
-// }
-
-// // Quiz
-// {
-//     id : 0,
-//     name : 'blabla',
-//     questions : [
-//         {
-//             id : 0,
-//             question : 'bla?',
-//             img : url,
-//             possibilities : ['sd', 'sf', 'fuck'],
-//             answer : 1
-//         },
-//         {
-//             id : 1,
-//             question : 'bla?',
-//             img : url,
-//             possibilities : ['sd', 'sf', 'fuck'],
-//             answer : 0
-//         }
-//     ],
-//     users : [],
-// }
-
-// /response
-// {
-//     quizz_id : 0,
-//     quesrion_id : 1,
-//     answer : 2
-// }
-
-// {
-//     result : false,
-//     corret_answer : 1
-// }
-
-// // // /quizzes/0
-// // {
-// //     name : 'new name'
-// //     // questions : [
-// //     //     {
-// //     //         id : 1,
-// //     //         question : 'new question?'
-// //     //     }
-// //     // ]
-// // }
+http.createServer((req, res) => {
+  res.writeHead(301, { Location: `https://${req.headers.host}${req.url}` });
+  res.end();
+}).listen(80, () => {
+  console.log('Redirecting HTTP to HTTPS');
+});

@@ -70,7 +70,7 @@ function App() {
         <Route path="/add-session" element={<AddSession tools={tools}></AddSession>}></Route>
         <Route path="/session-control" element={<SessionControl session={session} tools={tools}></SessionControl>}></Route>
         <Route path="/live" element={<Live session={session} tools={tools}></Live>}></Route>
-        <Route path="/user-login" element={<UserLogin tools={tools}></UserLogin>}></Route>
+        <Route path="/user-login/:session_id" element={<UserLogin tools={tools}></UserLogin>}></Route>
 
         </Routes>
         </>
