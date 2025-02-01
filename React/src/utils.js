@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const apiurl = "https://screenshare.net"
+const apiurl = "https://192.168.1.100"
 
 export const api = axios.create({
     baseURL: apiurl, // Replace with your API URL
