@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser')
 const fs = require('fs')
 const https = require('https')
+const http = require('http');
 
 const { exec } = require('child_process');
 const cors = require("cors");
@@ -15,6 +16,12 @@ const { createPeer, broadcaster } = require('./src/webrtc.js')
 const { authenticateToken, generateToken, generateHostAccessCode } = require('./src/authentication.js');
 const { session_router } = require('./src/session_router.js');
 const { user_router } = require('./src/user_router.js');
+
+
+
+const dns = require('dns')
+const os = require('os')
+
 
 const app = express()
 app.use(cors())
@@ -85,43 +92,84 @@ app.get('/:route', ({params : {route}}, res) => {
     res.redirect(301, `/?route=${route}`)
 })
 
-
 const options = {
     key : fs.readFileSync("key.pem"),
     cert : fs.readFileSync("cert.pem")
 }
 
-https.createServer(options, app).listen(443, '0.0.0.0', () => {
-    console.log('Server started')
+let domain = `www.screenshare.net`;
+let hostaddress = undefined
 
-    access_code = generateHostAccessCode()
-    // clipboardy.writeSync(access_code); // Copy the code to the clipboard
-    console.log(`Your access code is : "${access_code}"` )
-    
-    access_code_renewer = setInterval(() => {
+const interfaces = os.networkInterfaces()
+for(const iface of Object.values(interfaces)){
+    for(const config of iface){
+        if(config.family === 'IPv4' && !config.internal){
+            hostaddress = config.address
+            // console.log(`Local IP: ${config.address}`)
+        }
+    }
+}
+
+
+const client_config_path = "./public/config.js";
+
+function updateApiUrl(newUrl) {
+  let content = fs.readFileSync(client_config_path, "utf8");
+
+  content = content.replace(
+    /"apiurl"\s*:\s*".*?"/,
+    `"apiurl": "${newUrl}"`
+  );
+
+  fs.writeFileSync(client_config_path, content, "utf8");
+
+}
+
+
+
+dns.lookup(domain, (err, address) => {
+    if(err){
+        domain = hostaddress ? hostaddress : 'localhost'
+    }else{
+        if(hostaddress && hostaddress === address)
+            domain = 'www.screenshare.net'
+        else
+        domain = hostaddress ? hostaddress : 'localhost'
+    }
+    const url = `https://${domain}`
+    console.log(`Server will be listening at ${url}`)
+    updateApiUrl(url);
+
+    https.createServer(options, app).listen(443, '0.0.0.0', () => {
+        console.log('Server started')
+
         access_code = generateHostAccessCode()
         // clipboardy.writeSync(access_code); // Copy the code to the clipboard
+        console.log(`Your access code is : "${access_code}"` )
+        
+        access_code_renewer = setInterval(() => {
+            access_code = generateHostAccessCode()
+            // clipboardy.writeSync(access_code); // Copy the code to the clipboard
 
-        console.log(`Renewed access code : "${access_code}"` )
+            console.log(`Renewed access code : "${access_code}"` )
 
-    }, 30000)
+        }, 30000)
 
-    const url = `https://screenshare.net/`;
-    if (process.platform === 'win32') {
-        exec(`start ${url}`); // Windows
-    } else if (process.platform === 'darwin') {
-        exec(`open ${url}`); // macOS
-    } else {
-        exec(`xdg-open ${url}`); // Linux
-    }
 
+        if (process.platform === 'win32') {
+            exec(`start ${url}`); // Windows
+        } else if (process.platform === 'darwin') {
+            exec(`open ${url}`); // macOS
+        } else {
+            exec(`xdg-open ${url}`); // Linux
+        }
+
+    })
+
+    http.createServer((req, res) => {
+    res.writeHead(301, { Location: `https://${req.headers.host}${req.url}` });
+    res.end();
+    }).listen(80, () => {
+    console.log('Redirecting HTTP to HTTPS');
+    });
 })
-
-const http = require('http');
-
-http.createServer((req, res) => {
-  res.writeHead(301, { Location: `https://${req.headers.host}${req.url}` });
-  res.end();
-}).listen(80, () => {
-  console.log('Redirecting HTTP to HTTPS');
-});

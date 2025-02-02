@@ -1,3 +1,6 @@
+NAME.COM
+
+
 Le fichier ScreenShare/node/public/static/webrtc.js contienr la classe WebRTCConnection pour etablir la connexion avec le serveur
 Axios doit etre importé avant webrtc.js (ScreenShare/node/public/static/axios.min.js)
 
