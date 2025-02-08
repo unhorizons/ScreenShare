@@ -46,7 +46,6 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended : true}))
 
 
-
 // Prevents all access before the host has logged in
 app.use((req, res, next) => {
     if(!host_logged_in && req.path != HOST_ACCESS_PATH){
@@ -64,8 +63,10 @@ app.use('/sessions', session_router)
 app.use('/users', user_router)
 
 
-
 app.post('/host-login', ({body : {username, code}}, res) => {
+    if(host_logged_in){
+        return res.sendStatus(403)
+    }
     if(code === access_code){
 
         const user = new User({username, role : 'host'})
@@ -144,16 +145,15 @@ dns.lookup(domain, (err, address) => {
         console.log('Server started')
 
         access_code = generateHostAccessCode()
-        // clipboardy.writeSync(access_code); // Copy the code to the clipboard
+
         console.log(`Your access code is : "${access_code}"` )
         
         access_code_renewer = setInterval(() => {
             access_code = generateHostAccessCode()
-            // clipboardy.writeSync(access_code); // Copy the code to the clipboard
 
             console.log(`Renewed access code : "${access_code}"` )
 
-        }, 30000)
+        }, 60000)
 
 
         if (process.platform === 'win32') {
@@ -170,6 +170,6 @@ dns.lookup(domain, (err, address) => {
     res.writeHead(301, { Location: `https://${req.headers.host}${req.url}` });
     res.end();
     }).listen(80, () => {
-    console.log('Redirecting HTTP to HTTPS');
+        console.log('Redirecting HTTP to HTTPS');
     });
 })

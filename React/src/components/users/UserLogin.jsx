@@ -13,17 +13,29 @@ function UserLogin({tools}){
     const { session_id } = useParams()
     const [ loading, setLoading ] = useState(true) 
 
-    // const location = useLocation();
-    // const queryParams = new URLSearchParams(location.search);
-
-    // const session_id = queryParams.get('session_id'); 
-
     useEffect(() => {
         const updateSession = async () => {
             await tools.updateSession({session_id})
             setLoading(false)
         }
-        updateSession()
+        const validateToken = async () => {
+            if(tools.token){
+                try{
+                    const { data } = await utils.api.get('/users/validate')
+                    if (data) {
+                        tools.setToast({msg : 'User already logged in', type : 'success'})
+                        navigate("/live");
+                    }else{
+                        tools.setToast({msg : 'Login required', type : 'warning'})
+                    }
+                }catch (err){
+                    console.error(err)
+                    tools.setToast({msg : 'Login required', type : 'warning'})
+                }
+            }
+        }
+
+        updateSession().then(validateToken)
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 

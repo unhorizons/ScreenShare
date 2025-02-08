@@ -11,6 +11,16 @@ import styles from '../../styles/Live.module.css';
 function Live({session/*, tools*/}){
     const [ loading, setLoading ] = useState(true) 
 
+    useEffect(() => {
+        const handleBeforeUnload = (event) => {
+            event.preventDefault()
+            event.returnValue = "" // Required for modern browsers
+            utils.api.patch('/users', {viewing : false})
+        }
+    
+        window.addEventListener("beforeunload", handleBeforeUnload)
+        return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+    }, []);
  
     useEffect(() => {
         const joinSession = async () => {

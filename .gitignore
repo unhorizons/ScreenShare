@@ -13,6 +13,10 @@ __pycache__
 dist
 dist-ssr
 *.local
+node/server
+node/server-linux
+node/server-win.exe
+
 
 # Editor directories and files
 .vscode/*

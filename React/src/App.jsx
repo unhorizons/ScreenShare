@@ -5,6 +5,7 @@ import AddSession from './components/dashboard/AddSession'
 import UserLogin from './components/users/UserLogin'
 import SessionControl from './components/dashboard/SessionControl'
 import HostLogin from './components/dashboard/HostLogin'
+import NotFound from './components/NotFound'
 
 import {Routes,Route} from "react-router-dom"
 import { useEffect, useState } from 'react'
@@ -45,6 +46,12 @@ class Tools{
     updateToken(token){
         utils.token = token
     }
+    set token(token){
+        utils.token = token
+    }
+    get token(){
+        return utils.token
+    }
 }
 
 function App() {
@@ -71,7 +78,7 @@ function App() {
         <Route path="/session-control" element={<SessionControl session={session} tools={tools}></SessionControl>}></Route>
         <Route path="/live" element={<Live session={session} tools={tools}></Live>}></Route>
         <Route path="/user-login/:session_id" element={<UserLogin tools={tools}></UserLogin>}></Route>
-
+        <Route path="*" element={<NotFound></NotFound>}></Route>
         </Routes>
         </>
     )

@@ -25,7 +25,10 @@ function SessionControl({session, tools}){
         viewers = session.users.map(viewer =>
             <div key={viewer.id} className={styles.viewer}>
                 <div className={styles.profile}>{viewer.username[0]}</div>
-                <span className={styles.livebubble}></span>
+                
+                {viewer._viewing && <span className={`${styles.livebubble} ${styles.viewing}`}></span>}
+                {!viewer._viewing && <span className={styles.livebubble}></span>}
+
                 <div className={styles.name}>{viewer.username}</div>
             </div>
         )

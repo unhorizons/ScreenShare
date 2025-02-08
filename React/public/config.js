@@ -1,3 +1,3 @@
 window.APP_CONFIG = {
-    "apiurl" : "https://www.screenshare.com"
+    "apiurl" : "https://192.168.65.89"
 }

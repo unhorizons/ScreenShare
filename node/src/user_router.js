@@ -19,6 +19,20 @@ user_router.post('/', async ({body : {username}}, res) => {
     });
 });
 
+user_router.get('/validate-token', authenticateToken, async ({user}, res) => {
+    res.json({
+        detail : "valid token"
+    })
+})
+
+user_router.patch('/', authenticateToken, async ({user, body : {viewing}}, res) => {
+    if(user.viewing !== viewing){
+        user.viewing = viewing
+    }
+    res.json({
+        detail : 'User updated successfully'
+    })
+} )
 
 module.exports = {
     user_router

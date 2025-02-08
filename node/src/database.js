@@ -90,6 +90,7 @@ class User extends BaseModel{
     id
     username
     _session
+    _viewing
     role
 
     constructor({username, session, role='member'}){
@@ -108,7 +109,7 @@ class User extends BaseModel{
                 this._session = database.sessions[session]
             }
         }
-        
+        this._viewing = false
         this.id = database.users.length
         database.users.push(this)
     }
@@ -118,6 +119,7 @@ class User extends BaseModel{
     }
     set session(session){
         this._session = session
+        this.viewing = true
         databaseevent.emit('updated', session)
     }
 
@@ -127,8 +129,23 @@ class User extends BaseModel{
         return database['users'][id]
     }
 
+    get viewing(){
+        return this._viewing
+    }
+    set viewing(value){
+        if(value !== this.viewing){
+            this._viewing = value
+            databaseevent.emit('updated', this.session)
+        }
+    }
+
     static all(){
         return database['users']
+    }
+
+    logout(){
+        database.users = database.users.filter(user => user !== this)
+        databaseevent.emit('updated', this.session)
     }
 }
 

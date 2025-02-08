@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "pkg server.js --targets node18-linux-x64,node18-win-x64 "
   },
   "author": "",
   "license": "ISC",
@@ -16,6 +16,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
+    "node-pre-gyp": "^0.17.0",
     "qrcode": "^1.5.4",
     "wrtc": "^0.4.7"
   }
