@@ -3,7 +3,7 @@ const express = require('express')
 
 const { User, Session, databaseevent } = require('./database.js')
 const { WebRTCConnection } = require('./webrtc.js')
-const { authenticateToken, authenticateHost, sseAuthenticateToken} = require('./authentication.js')
+const { authenticateToken, authenticateHost, authenticateTokenFromQuery} = require('./authentication.js')
 const { raise404 } = require('./utils.js')
 
 const session_router = express.Router()
@@ -51,7 +51,7 @@ session_router.get('/:session', parseSession, async ({session}, res) => {
 }) 
 
 // SSE Route
-session_router.get("/:session/events", parseSession, sseAuthenticateToken, authenticateHost, (req, res) => {
+session_router.get("/:session/events", parseSession, authenticateTokenFromQuery, authenticateHost, (req, res) => {
 
     
     const headers = {

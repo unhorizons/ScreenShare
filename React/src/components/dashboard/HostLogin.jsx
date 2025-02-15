@@ -27,7 +27,7 @@ const HostLogin = ({tools}) => {
         });
 
         try{
-            const { data } = await api.post('/host-login', formobject)
+            const { data } = await api.post('/users/host-login', formobject)
             if (data.token) {
                 tools.updateToken(data.token)
                 navigate("/add-session"); 

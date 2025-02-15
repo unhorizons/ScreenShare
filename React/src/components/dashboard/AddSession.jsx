@@ -26,13 +26,13 @@ function AddSession({tools}){
 
         try{
             const { data } = await api.post('/sessions', formobject)
-            if(data.session != undefined){
+            if(data != undefined){
                 await tools.updateSession({
-                    session : data.session
+                    session : data
                 })
                 navigate("/session-control"); 
             } else {
-                tools.setToast({ msg: "No session id received", type: "error" })
+                tools.setToast({ msg: "No session data received", type: "error" })
             }
         }catch (err){
             if(err.response.data)
@@ -44,7 +44,6 @@ function AddSession({tools}){
 
     return (
         <>
-        {/* {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />} */}
         <div className="header">
             <div className="screen-share-title"><img src={screensharelogo} />SCREEN SHARE</div>
             <img className="club-logo" src={clublogo}/>
@@ -54,8 +53,8 @@ function AddSession({tools}){
             <h2>Nouvelle session</h2>
             <form className="container" onSubmit={handleSubmit}>
                 <div className="input-box">
-                    <label>Entrez le nom de l&apos;atelier</label>
-                    <input type="text" name="workshop" id="workshop" required></input>
+                    <label>Entrez le nom de la session</label>
+                    <input type="text" name="name" id="name" required></input>
                 </div>
                 <button type="submit">Go</button>
             </form>

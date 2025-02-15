@@ -21,7 +21,7 @@ function generateToken(user) {
   return jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '3h' });
 }
 
-async function sseAuthenticateToken(req, res, next) {
+async function authenticateTokenFromQuery(req, res, next) {
     const token = req.query.token;
     if (!token) return res.status(401).end();
     
@@ -75,5 +75,5 @@ function authenticateHost(req, res, next) {
 
 
 module.exports = {
-    generateToken, authenticateToken, generateHostAccessCode, authenticateHost, sseAuthenticateToken
+    generateToken, authenticateToken, generateHostAccessCode, authenticateHost, authenticateTokenFromQuery
 }

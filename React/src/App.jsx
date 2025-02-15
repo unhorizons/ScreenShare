@@ -37,7 +37,8 @@ class Tools{
                 this.setToast({msg : 'No session received', type : 'error'})
             }
         }catch (err){
-            if(err.response.data)
+            console.log(err)
+            if(err.response?.data)
                 this.setToast({msg : err.response.data.detail, type : 'error'})
             else
                 this.setToast({msg : 'Something went wrong', type : 'error'})

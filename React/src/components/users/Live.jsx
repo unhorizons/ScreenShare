@@ -8,23 +8,26 @@ import { utils } from "../../utils";
 
 import styles from '../../styles/Live.module.css';
 
-function Live({session/*, tools*/}){
+function Live({session, tools}){
     const [ loading, setLoading ] = useState(true) 
 
     useEffect(() => {
-        const handleBeforeUnload = (event) => {
-            event.preventDefault()
-            event.returnValue = "" // Required for modern browsers
-            utils.api.patch('/users', {viewing : false})
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                utils.api.patch('/users', {viewing : false})
+            } else {
+                utils.api.patch('/users', {viewing : true})
+            }
         }
     
-        window.addEventListener("beforeunload", handleBeforeUnload)
-        return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+        document.addEventListener("visibilitychange", handleVisibilityChange)
+        return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
     }, []);
  
     useEffect(() => {
         const joinSession = async () => {
             if(session.id != undefined){
+                
                 const connection = new utils.WebRTCConnection({
                     session : session.slug,
                     type : 'viewer',
@@ -33,14 +36,29 @@ function Live({session/*, tools*/}){
                 setLoading(false)
             }
         }
-        joinSession()
+        if(session.active){   
+            joinSession()
+        }else{
+            if(session.id != undefined){
+                const eventSource = new EventSource(`${utils.apiurl}/sessions/${session.slug}/started-events?token=${utils.token}`);
+    
+                eventSource.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    tools.updateSession({session:data})
+                    joinSession()
+                    eventSource.close()
+                };
+            }
+        }
+        // return () => eventSource.close(); // Cleanup on unmount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [session])
    
 
     if(loading){
         return (
             <>
-            <div className="screen-share-title"><img src={screensharelogo}/>Loading...</div>
+            <div className="screen-share-title"><img src={screensharelogo}/>Please wait...</div>
             </>
         )
     }
@@ -54,7 +72,7 @@ function Live({session/*, tools*/}){
 }
 
 Live.propTypes = {
-    // tools : PropTypes.object.isRequired,
+    tools : PropTypes.object.isRequired,
     session : PropTypes.object.isRequired
 }
 

@@ -1,41 +1,38 @@
-
-require('dotenv').config();
-const express = require('express')
-const bodyParser = require('body-parser')
-const fs = require('fs')
-const https = require('https')
-const http = require('http');
-
-const { exec } = require('child_process');
-const cors = require("cors");
+import dotenv from 'dotenv'
+dotenv.config()
 
 
-const { User } = require('./src/database.js')
-const { authenticateToken, generateToken, generateHostAccessCode } = require('./src/authentication.js');
-const { session_router } = require('./src/session_router.js');
-const { user_router } = require('./src/user_router.js');
+import express, { NextFunction, Request, Response } from 'express'
+
+import bodyParser from 'body-parser'
+import cors from 'cors'
+
+import fs from 'fs'
+import https from 'https'
+import http from 'http'
+import dns from 'dns'
+import os from 'os'
+import { exec } from 'child_process'
+
+import { User } from './database'
+import { generateHostAccessCode, generateToken } from './authentication'
+import { session_router } from './routers/session'
+import { user_router } from './routers/user'
 
 
 
-const dns = require('dns')
-const os = require('os')
-
-
-const app = express()
+const app = express();
 app.use(cors())
 
-const PORT = 5000 
-let access_code
-let access_code_renewer
+let access_code : string
+let access_code_renewer : NodeJS.Timeout
 let host_logged_in = false
-let HOST_ACCESS_PATH = '/host-login'
+let HOST_ACCESS_PATH = '/users/host-login'
 
 
 // Log all incoming requests
-app.use((req, res, next) => {
-
+app.use((req : Request, res : Response, next : NextFunction) => {
     console.log(`[${new Date().toLocaleString()}] [${req.method}] : ${req.path}`)
-
     next()
 })
 
@@ -43,16 +40,16 @@ app.use(express.static('public'))
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended : true}))
 
-
 // Prevents all access before the host has logged in
 app.use((req, res, next) => {
     if(!host_logged_in && req.path != HOST_ACCESS_PATH){
         res.status(403)
-        msg = "Server locked down until the host login"
+        let msg = "Server locked down until the host login"
         console.log(msg)
-        return res.json({
+        res.json({
             detail : msg
         })
+        return 
     }
     next()
 })
@@ -61,9 +58,10 @@ app.use('/sessions', session_router)
 app.use('/users', user_router)
 
 
-app.post('/host-login', ({body : {username, code}}, res) => {
+app.post(HOST_ACCESS_PATH, ({body : {username, code}} : Request, res : Response) => {
     if(host_logged_in){
-        return res.sendStatus(403)
+        res.sendStatus(403)
+        return 
     }
     if(code === access_code){
 
@@ -72,22 +70,23 @@ app.post('/host-login', ({body : {username, code}}, res) => {
 
         host_logged_in = true
         clearInterval(access_code_renewer)
-        return res.json({
+        res.json({
             token : token,
             detail : "Host logged in, the server has been unlocked"
         })
+        return 
     }
     res.status(400)
-    return res.json({
+    res.json({
         detail : "Invalid access code"
     })
+    return 
 })
 
-
-app.get('/live/:session', ({params : {session}}, res) => {
+app.get('/live/:session', ({params : {session}} : Request, res : Response) => {
     res.redirect(301, `/?route=user-login/${session}`)
 })
-app.get('/:route', ({params : {route}}, res) => {
+app.get('/:route', ({params : {route}} : Request, res : Response) => {
     res.redirect(301, `/?route=${route}`)
 })
 
@@ -101,29 +100,29 @@ let hostaddress = undefined
 
 const interfaces = os.networkInterfaces()
 for(const iface of Object.values(interfaces)){
-    for(const config of iface){
-        if(config.family === 'IPv4' && !config.internal){
-            hostaddress = config.address
-            // console.log(`Local IP: ${config.address}`)
+    if(iface){
+        for(const config of iface){
+            if(config.family === 'IPv4' && !config.internal){
+                hostaddress = config.address
+                // console.log(`Local IP: ${config.address}`)
+            }
         }
     }
 }
 
-
 const client_config_path = "./public/config.js";
 
-function updateApiUrl(newUrl) {
-  let content = fs.readFileSync(client_config_path, "utf8");
+function updateApiUrl(newUrl : string) {
+    let content = fs.readFileSync(client_config_path, "utf8");
 
-  content = content.replace(
-    /"apiurl"\s*:\s*".*?"/,
-    `"apiurl": "${newUrl}"`
-  );
+    content = content.replace(
+        /"apiurl"\s*:\s*".*?"/,
+        `"apiurl": "${newUrl}"`
+    );
 
-  fs.writeFileSync(client_config_path, content, "utf8");
+    fs.writeFileSync(client_config_path, content, "utf8");
 
 }
-
 
 
 dns.lookup(domain, (err, address) => {
@@ -164,7 +163,7 @@ dns.lookup(domain, (err, address) => {
 
     })
 
-    http.createServer((req, res) => {
+    http.createServer((req : http.IncomingMessage, res : http.ServerResponse) => {
     res.writeHead(301, { Location: `https://${req.headers.host}${req.url}` });
     res.end();
     }).listen(80, () => {

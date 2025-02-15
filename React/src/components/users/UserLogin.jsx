@@ -21,7 +21,7 @@ function UserLogin({tools}){
         const validateToken = async () => {
             if(tools.token){
                 try{
-                    const { data } = await utils.api.get('/users/validate')
+                    const { data } = await utils.api.get('/users/validate-token')
                     if (data) {
                         tools.setToast({msg : 'User already logged in', type : 'success'})
                         navigate("/live");
