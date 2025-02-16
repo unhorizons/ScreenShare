@@ -4,13 +4,10 @@
  * @module routers/user
  */
 
-import express, {Request, Response, NextFunction } from "express"
-
-import { User, Session, events, Identifier } from "../database"
-import { generateToken, authenticateToken, authenticateHost, authenticateTokenFromQuery} from '../authentication.js'
-
-import { raise404 } from "../utils"
-
+import express, { Request, Response, NextFunction } from 'express'; // Express framework
+import { User, Session, events, Identifier } from '../database'; // Database models and utilities
+import { generateToken, authenticateToken, authenticateHost, authenticateTokenFromQuery } from '../authentication.js'; // Authentication utilities
+import { raise404 } from '../utils'; // Utility function for raising 404 errors
 
 /**
  * Router for user-related endpoints.
@@ -18,7 +15,7 @@ import { raise404 } from "../utils"
  * @constant
  * @type {Router}
  */
-export const user_router = express.Router()
+export const user_router = express.Router();
 
 /**
  * Register a new user.
@@ -31,17 +28,19 @@ export const user_router = express.Router()
  * @param {Response} res - Express response object.
  * @returns {void}
  */
-user_router.post('/', async ({body : {username}} : Request, res : Response) => {
-    
-    const user = new User({username})
+user_router.post('/', async ({ body: { username } }: Request, res: Response) => {
+    // Create a new user with the provided username
+    const user = new User({ username });
+
+    // Generate a token for the new user
     const token = generateToken(user);
-    
-    res.json({ 
-        token : token,
-        detail : 'User registered successfully' 
+
+    // Respond with the token and a success message
+    res.json({
+        token: token,
+        detail: 'User registered successfully',
     });
 });
-
 
 /**
  * Validate the authentication token.
@@ -54,11 +53,12 @@ user_router.post('/', async ({body : {username}} : Request, res : Response) => {
  * @param {Response} res - Express response object.
  * @returns {void}
  */
-user_router.get('/validate-token', authenticateToken, async ({user} : Request, res : Response) => {
+user_router.get('/validate-token', authenticateToken, async ({ user }: Request, res: Response) => {
+    // Respond with a success message if the token is valid
     res.json({
-        detail : "valid token"
-    })
-})
+        detail: 'valid token',
+    });
+});
 
 /**
  * Update user information.
@@ -71,13 +71,14 @@ user_router.get('/validate-token', authenticateToken, async ({user} : Request, r
  * @param {Response} res - Express response object.
  * @returns {void}
  */
-user_router.patch('/', authenticateToken, async ({user, body : {viewing}} : Request, res : Response) => {
-    
-    if(user && user.viewing !== viewing){
-        user.viewing = viewing
+user_router.patch('/', authenticateToken, async ({ user, body: { viewing } }: Request, res: Response) => {
+    // Update the user's viewing status if it has changed
+    if (user && user.viewing !== viewing) {
+        user.viewing = viewing;
     }
-    res.json({
-        detail : 'User updated successfully'
-    })
-} )
 
+    // Respond with a success message
+    res.json({
+        detail: 'User updated successfully',
+    });
+});
