@@ -11,7 +11,7 @@ import styles from '../../styles/SessionControl.module.css';
 
 // import QRCode from 'qrcode';
 import { QRCodeCanvas } from "qrcode.react";
-import { utils, WebRTCConnection } from "../../utils.js";
+import { utils, /* WebRTCConnection,*/ WebRTCConnectionSocket } from "../../utils.js";
 
 let stream
 
@@ -58,7 +58,12 @@ function SessionControl({session, tools}){
     const startSession = useCallback(async () => {
         stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always" } })
         
-        const connection = new WebRTCConnection({
+        // const connection = new WebRTCConnection({
+        //     session : session.id,
+        //     type : 'broadcaster',
+        //     stream : stream
+        // })        
+        const connection = new WebRTCConnectionSocket({
             session : session.id,
             type : 'broadcaster',
             stream : stream
@@ -75,7 +80,9 @@ function SessionControl({session, tools}){
                     tools.setToast(err)
             }
         })
-        connection.open()
+        await connection.open()
+        await connection.startBroadcast()
+
         await tools.updateSession({})
     }, [session, tools])
 

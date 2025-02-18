@@ -8,7 +8,7 @@ import { utils } from "../../utils";
 
 import styles from '../../styles/Live.module.css';
 
-function Live({session, tools}){
+function Live({session}){
     const [ loading, setLoading ] = useState(true) 
 
     useEffect(() => {
@@ -28,30 +28,20 @@ function Live({session, tools}){
         const joinSession = async () => {
             if(session.id != undefined){
                 
-                const connection = new utils.WebRTCConnection({
-                    session : session.slug,
+                const connection = new utils.WebRTCConnectionSocket({
+                    session : session.id,
                     type : 'viewer',
                 })
+                
                 await connection.open()
+                await connection.joinBroadcast()
+
                 setLoading(false)
             }
         }
-        if(session.active){   
-            joinSession()
-        }else{
-            if(session.id != undefined){
-                const eventSource = new EventSource(`${utils.apiurl}/sessions/${session.slug}/started-events?token=${utils.token}`);
-    
-                eventSource.onmessage = (event) => {
-                    const data = JSON.parse(event.data);
-                    tools.updateSession({session:data})
-                    joinSession()
-                    eventSource.close()
-                };
-            }
-        }
-        // return () => eventSource.close(); // Cleanup on unmount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+        joinSession()
+  
     }, [session])
    
 

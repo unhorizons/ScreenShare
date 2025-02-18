@@ -62,8 +62,8 @@ The **ScreenShare API** is a backend service designed to facilitate real-time sc
 
 ### Base URL
 
-```code
-https://www.screenshare.net or https://localhost
+   ```code
+   https://www.screenshare.net or https://localhost
 
 ### Authentication
 

@@ -43,7 +43,7 @@ export function generateToken(user: User): string {
  * @param {Response} res - The Express response object.
  * @returns {void}
  */
-async function _authenticateToken(token: string, req: Request, res: Response) {
+async function _authenticateToken(token: string, req: Request, res: Response, next : NextFunction) {
     if (!token) return res.sendStatus(401); // Unauthorized if no token is provided
 
     const secret = process.env.JWT_SECRET; // Get the JWT secret from environment variables
@@ -69,9 +69,12 @@ async function _authenticateToken(token: string, req: Request, res: Response) {
         // Attach the user to the request object
         req.user = user as User;
     } catch (err) {
-        console.log(err); // Log the error
+
+        // console.error(err); // Log the error
         res.sendStatus(403); // Forbidden if token verification fails
+        return
     }
+    next(); // Proceed to the next middleware
 }
 
 /**
@@ -89,8 +92,7 @@ export async function authenticateTokenFromQuery(req: Request, res: Response, ne
     }
     const token = req.query.token; // Get the token from the query
 
-    _authenticateToken(token, req, res); // Authenticate the token
-    next(); // Proceed to the next middleware
+    _authenticateToken(token, req, res, next); // Authenticate the token
 }
 
 /**
@@ -107,8 +109,8 @@ export async function authenticateToken(req: Request, res: Response, next: NextF
         res.sendStatus(401); // Unauthorized if the token is not provided
         return;
     }
-    _authenticateToken(token, req, res); // Authenticate the token
-    next(); // Proceed to the next middleware
+    _authenticateToken(token, req, res, next); // Authenticate the token
+
 }
 
 /**

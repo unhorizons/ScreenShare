@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { WebRTCConnection } from './webrtc';
+import {WebSocket} from 'ws';
 
 // Event emitter for handling custom events (e.g., session updates, user updates)
 export const events = new EventEmitter();
@@ -88,6 +89,12 @@ export interface SessionData {
     host: string; // Host of the session
 }
 
+export interface SecondaryBroadcaster {
+    sdp : RTCSessionDescriptionInit,
+    ws : WebSocket, 
+    count : number
+}
+
 /**
  * Session model representing a session.
  */
@@ -101,6 +108,7 @@ export class Session extends BaseModel {
     _active: boolean; // Whether the session is active
 
     broadcaster?: WebRTCConnection; // Optional WebRTC broadcaster
+    secondary_broadcaster: SecondaryBroadcaster[]; // Optional WebRTC broadcaster
     broadcast: undefined; // Placeholder for broadcast functionality
 
     constructor({ name, host }: SessionData) {
@@ -115,6 +123,7 @@ export class Session extends BaseModel {
         // Call the parent constructor
         super(slug, Session._collection_name);
 
+        this.secondary_broadcaster = []
         this.name = name;
         this.host = host;
         this._active = false; // Session is inactive by default
@@ -185,6 +194,7 @@ export class User extends BaseModel {
     username: string; // User's username
     _session: Session | undefined; // Optional session the user is part of
     _viewing: boolean; // Whether the user is viewing the session
+    _peer_connection : WebRTCConnection | undefined; // The webRTC connection associated with this user 
     role: string; // Role of the user (default: 'member')
 
     constructor({ username, session, role = 'member' }: UserData) {
@@ -216,6 +226,20 @@ export class User extends BaseModel {
     }
 
     /**
+     * Getter for the webRTC peer connection associated with the user.
+     */
+    get peer_connection() : WebRTCConnection | undefined{
+        return this._peer_connection
+    }
+
+    /**
+     * Setter for the webRTC peer connection associated with the user.
+     */
+    set peer_connection(connection : WebRTCConnection){
+        this._peer_connection = connection
+    }
+
+    /**
      * Getter for the session the user is part of.
      */
     get session(): Session | undefined {
@@ -227,9 +251,11 @@ export class User extends BaseModel {
      * Emits an 'updated' event when the session changes.
      */
     set session(session) {
-        this._session = session;
-        this._viewing = true; // Automatically set viewing to true
-        events.emit('updated', session); // Emit an 'updated' event
+        if(session){
+            this._session = session;
+            this._viewing = true; // Automatically set viewing to true
+            events.emit('updated', session); // Emit an 'updated' event
+        }
     }
 
     /**
@@ -250,7 +276,7 @@ export class User extends BaseModel {
             } else {
                 this._viewing = false;
             }
-            events.emit('updated', this.session); // Emit an 'updated' event
+            this.session && events.emit('updated', this.session); // Emit an 'updated' event
         }
     }
 
