@@ -1,70 +1,82 @@
-// import clublogo from "../../assets/club-logo.png"; 
-import screensharelogo from "../../assets/screenshare-logo.png"; 
+// import clublogo from "../../assets/club-logo.png";
+import screensharelogo from "../../assets/screenshare-logo.png";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-import PropTypes from "prop-types"
-import { utils } from "../../utils";
+import PropTypes from "prop-types";
+import { createWebSocket, utils } from "../../utils";
 
-import styles from '../../styles/Live.module.css';
+import styles from "../../styles/Live.module.css";
 
-function Live({session}){
-    const [ loading, setLoading ] = useState(true) 
+function Live({ session }) {
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const handleVisibilityChange = () => {
             if (document.hidden) {
-                utils.api.patch('/users', {viewing : false})
+                utils.api.patch("/users", { viewing: false });
             } else {
-                utils.api.patch('/users', {viewing : true})
+                utils.api.patch("/users", { viewing: true });
             }
-        }
-    
-        document.addEventListener("visibilitychange", handleVisibilityChange)
-        return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        return () =>
+            document.removeEventListener(
+                "visibilitychange",
+                handleVisibilityChange
+            );
     }, []);
- 
+
     useEffect(() => {
         const joinSession = async () => {
-            if(session.id != undefined){
-                
+            if (session.id != undefined) {
                 const connection = new utils.WebRTCConnectionSocket({
-                    session : session.id,
-                    type : 'viewer',
-                })
-                
-                await connection.open()
-                await connection.joinBroadcast()
+                    session: session.id,
+                    type: "viewer",
+                });
+                const { ws } = await createWebSocket();
 
-                setLoading(false)
+                await connection.open(ws);
+                await connection.joinBroadcast();
+
+                setLoading(false);
             }
-        }
+        };
 
-        joinSession()
-  
-    }, [session])
-   
+        joinSession();
+    }, [session]);
 
-    if(loading){
+    if (loading) {
         return (
             <>
-            <div className="screen-share-title"><img src={screensharelogo}/>Please wait...</div>
+                <div className="screen-share-title">
+                    <img src={screensharelogo} />
+                    Please wait...
+                </div>
             </>
-        )
+        );
     }
 
-    return(
+    return (
         <>
-            <div className="screen-share-title"><img src={screensharelogo}/>SCREEN SHARE</div>
-            <video autoPlay controls className={styles.video} id="video"></video>
+            <div className="screen-share-title">
+                <img src={screensharelogo} />
+                SCREEN SHARE
+            </div>
+            <video
+                autoPlay
+                controls
+                className={styles.video}
+                id="video"
+            ></video>
         </>
-    )
+    );
 }
 
 Live.propTypes = {
-    tools : PropTypes.object.isRequired,
-    session : PropTypes.object.isRequired
-}
+    tools: PropTypes.object.isRequired,
+    session: PropTypes.object.isRequired,
+};
 
-
-export default Live
+export default Live;

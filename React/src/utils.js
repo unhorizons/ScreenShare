@@ -7,92 +7,6 @@ export const api = axios.create({
     baseURL: apiurl, // Replace with your API URL
 });
 
-export class WebRTCConnection {
-    peer;
-    stream;
-    session;
-
-    constructor({ session, type, stream }) {
-        this.session = session;
-        this.type = type;
-        this.stream = stream;
-    }
-
-    static async handleNegotiationNeededEvent({ peer, session_id, type }) {
-        const offer = await peer.createOffer();
-        await peer.setLocalDescription(offer);
-        const payload = {
-            sdp: peer.localDescription,
-        };
-
-        let action;
-        if (type === "broadcaster") {
-            action = "start-broadcast";
-        } else if (type === "viewer") {
-            action = "join-broadcast";
-        }
-
-        const { data } = await api.post(
-            `/sessions/${action}/${session_id}`,
-            payload
-        );
-
-        const desc = new RTCSessionDescription(data.sdp);
-        peer.setRemoteDescription(desc).catch((e) => console.log(e));
-    }
-
-    async open() {
-        this.peer = new RTCPeerConnection({
-            iceServers: [
-                {
-                    urls: "stun:stun.stunprotocol.org",
-                },
-            ],
-        });
-
-        this.peer.onnegotiationneeded = () =>
-            WebRTCConnection.handleNegotiationNeededEvent({
-                peer: this.peer,
-                session_id: this.session,
-                type: this.type,
-            });
-
-        if (this.type === "broadcaster") {
-            this.stream
-                .getTracks()
-                .forEach((track) => this.peer.addTrack(track, this.stream));
-        } else if (this.type === "viewer") {
-            this.peer.ontrack = async (e) => {
-                document.getElementById("video").srcObject = e.streams[0];
-                this.stream = e.streams[0];
-            };
-            this.peer.addTransceiver("video", { direction: "recvonly" });
-        }
-    }
-
-    async close() {
-        const { data } = await api.post(
-            `/sessions/end-broadcast/${this.session}`,
-            {}
-        );
-
-        if (!data) {
-            throw { msg: "Something went wrong", type: "error" };
-        }
-
-        this.peer
-            .getSenders()
-            .forEach((sender) => this.peer.removeTrack(sender));
-        this.peer
-            .getTransceivers()
-            .forEach((transceiver) => transceiver.stop());
-        this.peer.close();
-        this.peer = null;
-
-        return { msg: data.detail, type: "success" };
-    }
-}
-
 export class WebRTCConnectionSocket {
     peer;
     stream;
@@ -107,14 +21,7 @@ export class WebRTCConnectionSocket {
     }
 
     close() {
-        this.ws.send(
-            JSON.stringify({
-                type: "close",
-                session_id: this.session,
-            })
-        );
-
-        return Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             this.ws.on("message", (event) => {
                 const msg = JSON.parse(event.data);
                 if (msg.type === "closed") {
@@ -139,44 +46,34 @@ export class WebRTCConnectionSocket {
                     });
                 }
             });
+            this.ws.send(
+                JSON.stringify({
+                    client_id: this.client_id,
+                    type: "close",
+                    session_id: this.session,
+                })
+            );
         });
     }
 
-    open() {
-        return new Promise((resolve, reject) => {
-            this.ws = new WebSocket(`${apiurl.replace("https", "wss")}`);
-            this.client_id;
+    open(ws, client_id) {
+        this.client_id = client_id;
+        this.ws = ws;
 
-            // Handle WebSocket messages
-            this.ws.onmessage = (event) => {
-                const message = JSON.parse(event.data);
+        // Handle WebSocket messages
+        this.ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
 
-                if (message.type === "id") {
-                    this.client_id = message.id;
-                    console.log("My ID:", this.client_id);
-                } else if (message.type === "offer") {
-                    this.handleOffer(message.offer);
-                } else if (message.type === "answer") {
-                    this.handleAnswer(message.answer);
-                } else if (message.type === "candidate") {
-                    this.handleCandidate(message.candidate);
-                }
-            };
-
-            this.ws.onopen = () => {
-                console.log("WebSocket connection established");
-                resolve(this); // Resolve the promise with the WebSocket instance
-            };
-
-            this.ws.onerror = (error) => {
-                console.error("WebSocket connection error:", error);
-                reject(error); // Reject the promise if there's an error
-            };
-
-            this.ws.onclose = () => {
-                console.log("WebSocket connection closed");
-            };
-        });
+            if (message.type === "offer") {
+                this.handleOffer(message.offer);
+            } else if (message.type === "answer") {
+                this.handleAnswer(message.answer);
+            } else if (message.type === "candidate") {
+                this.handleCandidate(message.candidate);
+            } else if (message.type === "reverseoffer") {
+                this.handleReverseOffer();
+            }
+        };
     }
     async startBroadcast() {
         await this.createPeerConnection();
@@ -190,7 +87,27 @@ export class WebRTCConnectionSocket {
 
         this.ws.send(
             JSON.stringify({
+                client_id: this.client_id,
                 type: "offer",
+                session_id: this.session,
+                offer: this.peer.localDescription,
+            })
+        );
+    }
+    async handleReverseOffer() {
+        await this.createPeerConnection();
+
+        this.stream
+            .getTracks()
+            .forEach((track) => this.peer.addTrack(track, this.stream));
+
+        const offer = await this.peer.createOffer();
+        await this.peer.setLocalDescription(offer);
+
+        this.ws.send(
+            JSON.stringify({
+                client_id: this.client_id,
+                type: "direct-offer",
                 session_id: this.session,
                 offer: this.peer.localDescription,
             })
@@ -201,6 +118,7 @@ export class WebRTCConnectionSocket {
 
         this.ws.send(
             JSON.stringify({
+                client_id: this.client_id,
                 type: "reverseoffer",
                 session_id: this.session,
             })
@@ -218,6 +136,7 @@ export class WebRTCConnectionSocket {
             if (event.candidate) {
                 this.ws.send(
                     JSON.stringify({
+                        client_id: this.client_id,
                         type: "candidate",
                         candidate: event.candidate,
                     })
@@ -276,6 +195,7 @@ export class WebRTCConnectionSocket {
 
         this.ws.send(
             JSON.stringify({
+                client_id: this.client_id,
                 type: "answer",
                 answer: this.peer.localDescription,
             })
@@ -284,9 +204,9 @@ export class WebRTCConnectionSocket {
 }
 
 export const utils = {
-    api: api,
-    WebRTCConnection: WebRTCConnection,
-    WebRTCConnectionSocket: WebRTCConnectionSocket,
+    api,
+    WebRTCConnectionSocket,
+    // createWebSocket,
 
     get sessionID() {
         return localStorage.getItem("session_id");
@@ -307,3 +227,41 @@ export const utils = {
 };
 
 utils.token = localStorage.getItem("jwt");
+
+export const createWebSocket = async () => {
+    return new Promise((resolve, reject) => {
+        const ws = new WebSocket(
+            `${apiurl.replace("https", "wss")}?token=${utils.token}`
+        );
+
+        // TODO: Remove single time event handlers
+
+        // Handle WebSocket messages
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+
+            if (message.type === "id") {
+                console.log("My ID:", message.id);
+                resolve({ ws, id: message.id }); // Resolve the promise with the WebSocket instance
+            }
+
+            if (message.type === "authentication-error") {
+                console.log();
+                reject(message.error);
+            }
+        };
+
+        ws.onopen = () => {
+            console.log("WebSocket connection established");
+        };
+
+        ws.onerror = (error) => {
+            console.error("WebSocket connection error:", error);
+            reject(error); // Reject the promise if there's an error
+        };
+
+        ws.onclose = () => {
+            console.log("WebSocket connection closed");
+        };
+    });
+};

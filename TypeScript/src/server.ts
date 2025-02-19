@@ -14,7 +14,11 @@ import os from "os"; // Operating system utilities
 import { exec } from "child_process"; // Execute shell commands
 
 import { User, Session } from "./database"; // User model
-import { generateHostAccessCode, generateToken } from "./authentication"; // Authentication utilities
+import {
+    generateHostAccessCode,
+    generateToken,
+    authenticateWebSocketToken,
+} from "./authentication"; // Authentication utilities
 import { session_router } from "./routers/session"; // Session router
 import { user_router } from "./routers/user"; // User router
 import { WebRTCConnection } from "./webrtc";
@@ -114,14 +118,30 @@ const server = https.createServer(options, app);
 const wss = new WebSocketServer({ server });
 
 // Store connected clients
-const clients = new Map();
+interface WebSocketPeer {
+    ws: WebSocket;
+    type: "broadcaster" | "viewer" | "secondary-broadcaster";
+    count: number;
+    id: string;
+}
+const clients: Map<string, WebSocketPeer> = new Map();
+
+let broadcaster: WebSocketPeer;
 
 // WebSocket connection handler
 wss.on("connection", (ws: WebSocket, req) => {
+    const url = new URL(req.url as string, `http://${req.headers.host}`);
+    const token = url.searchParams.get("token");
+
+    // const token = req.headers["authorization"]?.split(" ")[1];
+
+    const user = authenticateWebSocketToken(token, ws);
+    if (!user) return;
+
     console.log("A new client connected!");
 
     const clientId = Math.random().toString(36).substring(7);
-    clients.set(clientId, ws);
+    clients.set(clientId, { ws, count: 0, type: "viewer", id: clientId });
 
     // Send the client their ID
     ws.send(JSON.stringify({ type: "id", id: clientId }));
@@ -130,7 +150,22 @@ wss.on("connection", (ws: WebSocket, req) => {
     ws.on("message", async (message) => {
         const data = JSON.parse(message.toString());
 
+        const ws_peer = clients.get(data.client_id);
+        if (!ws_peer) {
+            ws.send(
+                JSON.stringify({
+                    type: "error",
+                    error: "Client id not registered",
+                })
+            );
+            return;
+        }
+
         if (data.type === "offer") {
+            ws_peer.type = "broadcaster";
+
+            broadcaster = ws_peer;
+
             const session = Session.get(data.session_id) as Session;
             if (!session) {
                 console.log(`Session ${data.session_id} not found`);
@@ -152,21 +187,78 @@ wss.on("connection", (ws: WebSocket, req) => {
         if (data.type === "reverseoffer") {
             console.log("Reverse offer");
 
-            const session = Session.get(data.session_id) as Session;
-            if (!session) {
-                console.log(`Session ${data.session_id} not found`);
+            if (!broadcaster) {
                 ws.send(
                     JSON.stringify({
-                        error: "Session not found",
+                        type: "error",
+                        error: "No broadcaster available, try again later",
                     })
                 );
                 return;
             }
 
-            await WebRTCConnection.outgoingOffer({
-                session,
-                ws,
+            let sender: WebSocketPeer | undefined = undefined;
+
+            if (broadcaster.count < 2) {
+                sender = broadcaster;
+            } else {
+                for (let client of clients.values()) {
+                    if (
+                        client.type === "secondary-broadcaster" &&
+                        client.count < 2
+                    ) {
+                        sender = client;
+                    }
+                }
+            }
+
+            if (!sender) {
+                ws.send(
+                    JSON.stringify({
+                        type: "error",
+                        error: "No broadcaster available, try again later",
+                    })
+                );
+                return;
+            }
+
+            sender.ws.on("message", (msg) => {
+                const msg_data = JSON.parse(msg.toString());
+                if (msg_data.type === "direct-offer") {
+                    ws.send(
+                        JSON.stringify({
+                            type: "offer",
+                            offer: msg_data.offer,
+                        })
+                    );
+                } else {
+                    ws.send(msg.toString());
+                }
             });
+            ws.on("message", (msg) => {
+                sender.ws.send(msg.toString());
+            });
+            sender.ws.send(JSON.stringify(data));
+
+            sender.count++;
+
+            return;
+
+            // const session = Session.get(data.session_id) as Session;
+            // if (!session) {
+            //     console.log(`Session ${data.session_id} not found`);
+            //     ws.send(
+            //         JSON.stringify({
+            //             error: "Session not found",
+            //         })
+            //     );
+            //     return;
+            // }
+
+            // await WebRTCConnection.outgoingOffer({
+            //     session,
+            //     ws,
+            // });
         }
     });
 

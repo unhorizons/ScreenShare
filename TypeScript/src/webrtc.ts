@@ -170,6 +170,13 @@ export class WebRTCConnection {
                 const desc = new RTCSessionDescription(data.answer);
                 await this.peer?.setRemoteDescription(desc);
             }
+        } else if (data.type === "close") {
+            // Not yet implemented
+            this.ws.send(
+                JSON.stringify({
+                    type: "not-closed",
+                })
+            );
         }
     }
 

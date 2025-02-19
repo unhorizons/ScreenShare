@@ -1,3 +1,3 @@
 window.APP_CONFIG = {
-    "apiurl": "https://192.168.250.89"
+    "apiurl": "https://192.168.117.89"
 }
